@@ -20,7 +20,7 @@ def getCurWkDtRange():
 
 
 
-def main():
+def extract_dividends_data_main():
     # company symbols from which to extract data from
     symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "FB", "TSLA", "NVDA"]
     symbols_params_str = ",".join(symbols)
@@ -38,26 +38,26 @@ def main():
     }
     
     # make the API request
-req = req.get(MS_DIVIDENDS_URL, params=params)
+    req = req.get(MS_DIVIDENDS_URL, params=params)
 
-# parse the response data
-# TODO: handle possible errors in response
-try:
-    data = req.json() if req.status_code == 200 else None
-except json.JSONDecodeError as e:
-    print(f"Error parsing API response to JSON: {e}")
-    data = None
-    exit(1)
+    # parse the response data
+    # TODO: handle possible errors in response
+    try:
+        data = req.json() if req.status_code == 200 else None
+    except json.JSONDecodeError as e:
+        print(f"Error parsing API response to JSON: {e}")
+        data = None
+        exit(1)
 
-dest_blob_name = f"dividend_data_{monday.strftime('%Y%m%d')}_{friday.strftime('%Y%m%d')}.json"
+    dest_blob_name = f"dividend_data_{monday.strftime('%Y%m%d')}_{friday.strftime('%Y%m%d')}.json"
 
-# initialize GCS client and specify bucket and blob
-storage_client = storage.Client()
-bucket = storage_client.bucket(MS_DIVIDENDS_DATA_BUCKET)
-blob = bucket.blob(dest_blob_name)
+    # initialize GCS client and specify bucket and blob
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(MS_DIVIDENDS_DATA_BUCKET)
+    blob = bucket.blob(dest_blob_name)
 
-# write data to the blob
-blob.upload_from_string(json.dumps(data['data'], indent=4), content_type="application/json")
+    # write data to the blob
+    blob.upload_from_string(json.dumps(data['data'], indent=4), content_type="application/json")
 
 
 

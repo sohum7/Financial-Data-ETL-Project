@@ -4,11 +4,11 @@ steps:
     args:
       - functions
       - deploy
-      - dividends_etl
+      - market-stack-dividends-json-extract
       - --runtime=python310
       - --region=us-central1
       - --trigger-http
-      - --entry-point=main
+      - --entry-point=extract_dividends_data_main
       - --source=dividends
       - --allow-unauthenticated
 
