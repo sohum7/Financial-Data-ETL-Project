@@ -6,7 +6,7 @@ from google.cloud import storage
 MS_DIVIDENDS_API_KEY = "25d2f25478972551751d275bd4048f10"
 MS_DIVIDENDS_URL = "https://api.marketstack.com/v2/dividends"
 
-MS_DIVIDENDS_DATA_BUCKET = "dividend-data-dev"
+MS_DIVIDENDS_DATA_BUCKET = "market-stack-data-dev"
 
 
 def getCurWkDtRange():
