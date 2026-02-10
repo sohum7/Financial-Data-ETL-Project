@@ -11,6 +11,7 @@ steps:
       - --entry-point=main
       - --source=dividends
       - --allow-unauthenticated
+      - --no-gen2
 
 options:
   logging: CLOUD_LOGGING_ONLY
