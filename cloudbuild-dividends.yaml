@@ -1,0 +1,16 @@
+steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - functions
+      - deploy
+      - dividends_etl
+      - --runtime=python310
+      - --region=us-central1
+      - --trigger-http
+      - --entry-point=main
+      - --source=dividends
+      - --allow-unauthenticated
+
+options:
+  logging: CLOUD_LOGGING_ONLY
