@@ -20,7 +20,7 @@ def getCurWkDtRange():
 
 
 
-def extract_dividends_data_main():
+def main():
     # company symbols from which to extract data from
     symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "FB", "TSLA", "NVDA"]
     symbols_params_str = ",".join(symbols)

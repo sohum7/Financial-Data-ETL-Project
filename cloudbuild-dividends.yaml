@@ -8,7 +8,7 @@ steps:
       - --runtime=python310
       - --region=us-central1
       - --trigger-http
-      - --entry-point=extract_dividends_data_main
+      - --entry-point=main
       - --source=dividends
       - --allow-unauthenticated
 
