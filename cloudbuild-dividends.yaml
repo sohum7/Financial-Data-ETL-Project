@@ -5,6 +5,7 @@ steps:
       - functions
       - deploy
       - market-stack-dividends-json-extract
+      - --gen2
       - --runtime=python310
       - --region=us-central1
       - --trigger-http
