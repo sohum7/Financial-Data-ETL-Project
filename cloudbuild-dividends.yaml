@@ -9,7 +9,7 @@ steps:
       - --runtime=python310
       - --region=us-central1
       - --trigger-http
-      - --entry-point=extract_dividends_main
+      - --entry-point=extract_dividends_entry_point
       - --source=dividends
       - --allow-unauthenticated
       - --no-gen2
