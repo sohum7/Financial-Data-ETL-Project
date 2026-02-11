@@ -7,6 +7,7 @@ MS_DIVIDENDS_API_KEY = "25d2f25478972551751d275bd4048f10"
 MS_DIVIDENDS_URL = "https://api.marketstack.com/v2/dividends"
 
 MS_DIVIDENDS_DATA_BUCKET = "market-stack-data-dev"
+MS_DIVIDENDS_DATA_BUCKET_SUBDIR = "bronze/dividends/"
 
 
 def getCurWkDtRange():
@@ -49,15 +50,15 @@ def main():
         data = None
         exit(1)
 
-    dest_blob_name = f"dividend_data_{monday.strftime('%Y%m%d')}_{friday.strftime('%Y%m%d')}.json"
+    blob_filename = f"dividend_data_{monday.strftime('%Y%m%d')}_{friday.strftime('%Y%m%d')}.json"
 
     # initialize GCS client and specify bucket and blob
     storage_client = storage.Client()
     bucket = storage_client.bucket(MS_DIVIDENDS_DATA_BUCKET)
-    blob = bucket.blob(dest_blob_name)
+    blob = bucket.blob(f'{MS_DIVIDENDS_DATA_BUCKET_SUBDIR}{blob_filename}')
 
     # write data to the blob
-    blob.upload_from_string(json.dumps(data['data'], indent=4), content_type="application/json")
+    blob.upload_from_string(json.dumps(data, indent=4), content_type="application/json")
 
 
 
