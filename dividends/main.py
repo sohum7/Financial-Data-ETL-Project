@@ -6,3 +6,5 @@ def extract_dividends_main(request):
     data = extract_dividends_main(request)
     print("Extraction completed")
     return "Dividends Extraction completed successfully"
+
+pass
