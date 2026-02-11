@@ -39,12 +39,12 @@ def main():
     }
     
     # make the API request
-    req = req.get(MS_DIVIDENDS_URL, params=params)
+    res = req.get(MS_DIVIDENDS_URL, params=params)
 
     # parse the response data
     # TODO: handle possible errors in response
     try:
-        data = req.json() if req.status_code == 200 else None
+        data = res.json() if res.status_code == 200 else None
     except json.JSONDecodeError as e:
         print(f"Error parsing API response to JSON: {e}")
         data = None
