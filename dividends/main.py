@@ -7,4 +7,3 @@ def extract_dividends_entry_point(request):
     print("Extraction completed")
     print("test")
     return "Dividends Extraction completed successfully"
-pass

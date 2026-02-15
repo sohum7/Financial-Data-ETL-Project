@@ -1,0 +1,10 @@
+steps:
+  - name: 'gcr.io/cloud-builders/gsutil'
+    id: 'Upload PySpark Job'
+    args:
+      - cp
+      - /dividends/transform_dividends_data.py
+      - gs://market-stack-code-dev/dataproc/dividends/transform_dividends_data.py
+
+options:
+  logging: CLOUD_LOGGING_ONLY
