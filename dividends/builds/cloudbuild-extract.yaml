@@ -5,7 +5,6 @@ steps:
       - functions
       - deploy
       - market-stack-dividends-extract-json
-      - --gen2
       - --runtime=python310
       - --region=us-central1
       - --trigger-http
@@ -13,6 +12,7 @@ steps:
       - --entry-point=extract_entry_point
       - --source=dividends/code
       - --allow-unauthenticated
+      - --no-gen2
 
 options:
   logging: CLOUD_LOGGING_ONLY
