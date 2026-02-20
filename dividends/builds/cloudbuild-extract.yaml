@@ -11,7 +11,7 @@ steps:
       - --trigger-http
       - --service-account=market-stack-func-gcs-uploader@project-e6aecb7b-2aa0-4815-8c3.iam.gserviceaccount.com
       - --entry-point=extract_dividends_entry_point
-      - --source=dividends
+      - --source=dividends/code
       - --allow-unauthenticated
       - --no-gen2
 
