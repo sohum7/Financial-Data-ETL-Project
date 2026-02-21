@@ -1,8 +1,8 @@
 import requests as req
 import json
 from google.cloud import storage
-from .utilities import getCurWkDtRange
-from ..configs.config import MS_FILE_FORMAT, MS_DIVIDENDS, MS_DIVIDENDS_API_KEY, MS_DIVIDENDS_URL, MS_DIVIDENDS_RAW_FILE_TYPE, MS_DIVIDENDS_RAW_FILE_BUCKET, MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR
+from dividends.src.utilities import getCurWkDtRange
+from dividends.configs.config import MS_FILE_FORMAT, MS_DIVIDENDS, MS_DIVIDENDS_API_KEY, MS_DIVIDENDS_URL, MS_DIVIDENDS_RAW_FILE_TYPE, MS_DIVIDENDS_RAW_FILE_BUCKET, MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR
 
 
 def main():
