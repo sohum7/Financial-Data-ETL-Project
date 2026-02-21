@@ -15,7 +15,7 @@ steps:
           --source=dividends/code \
           --allow-unauthenticated \
           --trigger-http \
-          --timeout=600s;
+          --timeout=720s;
         then
           echo "Cloud Function deployed successfully."
         else
