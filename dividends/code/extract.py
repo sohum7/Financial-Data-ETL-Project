@@ -4,12 +4,6 @@ from google.cloud import storage
 from .utilities import getCurWkDtRange
 from ..configs.config import MS_FILE_FORMAT, MS_DIVIDENDS, MS_DIVIDENDS_API_KEY, MS_DIVIDENDS_URL, MS_DIVIDENDS_RAW_FILE_TYPE, MS_DIVIDENDS_RAW_FILE_BUCKET, MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR
 
-MS_DIVIDENDS_API_KEY = "25d2f25478972551751d275bd4048f10"
-MS_DIVIDENDS_URL = "https://api.marketstack.com/v2/dividends"
-
-MS_DIVIDENDS_DATA_BUCKET = "market-stack-data-dev"
-MS_DIVIDENDS_DATA_BUCKET_SUBDIR = "bronze/dividends/"
-
 
 def main():
     # company symbols from which to extract data from
