@@ -1,10 +1,13 @@
 steps:
   - name: 'gcr.io/cloud-builders/gsutil'
     id: 'Upload PySpark Job'
+    entrypoint: bash
     args:
+      - -c
+      - |
       - cp
-      - /dividends/code/transform.py
-      - gs://market-stack-code-dev/dataproc/dividends/transform.py
+        echo "Copying sub-subfolder to GCS..."
+        gsutil cp dividends/code/transform.py gs://market-stack-code-dev/dataproc/dividends/transform.py
 
 options:
   logging: CLOUD_LOGGING_ONLY
