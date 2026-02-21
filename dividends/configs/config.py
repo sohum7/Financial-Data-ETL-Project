@@ -3,12 +3,9 @@
 # This file defines constants for API keys, URLs, file formats, and GCS bucket details used across the ETL pipeline.
 
 # imports
-import dividends.configs.config as config
-
 import os
 import configparser
 from pathlib import Path
-
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_ENV_VAR_NAME = "APP_ENV"

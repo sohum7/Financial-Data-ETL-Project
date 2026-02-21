@@ -12,7 +12,7 @@ steps:
           --region=us-central1 \
           --service-account=market-stack-func-gcs-uploader@project-e6aecb7b-2aa0-4815-8c3.iam.gserviceaccount.com \
           --entry-point=extract_entry_point \
-          --source=dividends/code \
+          --source=dividends \
           --allow-unauthenticated \
           --trigger-http \
           --timeout=720s;
@@ -23,6 +23,20 @@ steps:
           exit 1
         fi
 
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'Upload PySpark Job'
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "**** Copying transfer.py to GCS bucket... ****"
+        if gsutil cp dividends/code/transform.py gs://market-stack-code-dev/dataproc/dividends/transform.py;
+        then
+          echo "File copied successfully."
+        else
+          echo "Failed to copy file."
+          exit 1
+        fi
 
 options:
   logging: CLOUD_LOGGING_ONLY
