@@ -1,4 +1,4 @@
-from code.extract import main as extract_main
+from src.extract import main as extract_main
 #from code.transform import main as transform_main
 #from code.load import main as load_main
 
