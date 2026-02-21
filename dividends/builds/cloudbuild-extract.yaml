@@ -20,6 +20,8 @@ steps:
           echo "Cloud Function deployed successfully."
         else
           echo "Failed to deploy Cloud Function."
+          exit 1
+        fi
 
 
 options:
