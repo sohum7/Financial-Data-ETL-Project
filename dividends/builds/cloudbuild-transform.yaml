@@ -5,7 +5,6 @@ steps:
     args:
       - -c
       - |
-      - cp
         echo "**** Copying transfer.py to GCS bucket... ****"
         if gsutil cp dividends/code/transform.py gs://market-stack-code-dev/dataproc/dividends/transform.py;
         then
