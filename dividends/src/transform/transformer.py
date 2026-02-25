@@ -1,14 +1,14 @@
 from pyspark.sql.functions import col, explode
-from dividends.src.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
+from src.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
 
-def transform_dividends(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, **kwargs):
-        tfd_file_type = kwargs.get("tfd_file_type", "delta")
+def transform_dividends(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_nm, tfd_bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
+        tfd_file_type = kwargs.get("tfd_file_type", "parquet")
         tfd_save_mode = kwargs.get("save_mode", "append")
         
         try:
-                df = read_json_from_gcs(data_cat, raw_bucket_nm, raw_dir_nm, batch_dt, with_spark=True, **kwargs) # read_json_from_gcs_with_spark(spark, raw_bucket_nm, raw_dir_nm, batch_dt)
+                df = read_json_from_gcs(data_cat, raw_bucket_nm, raw_bucket_dir_path, batch_dt, with_spark=True, **kwargs) # read_json_from_gcs_with_spark(spark, raw_bucket_nm, raw_dir_nm, batch_dt)
         except Exception as e:
-                return {"status": "error", "message": f"Error reading raw JSON data from GCS: {e}"}, 500
+                return logger.error(f"Error reading raw JSON data from GCS: {e}"); return False
         
         # Flatten the nested JSON structure and select the relevant fields
         df = df.select(explode(col("data")).alias("record")).select("record.*")
@@ -55,9 +55,10 @@ def transform_dividends(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_
         
         # Write the transformed data back to GCS in delta lake format (parquet), partitioned by market_dt and clustered by symbol
         try:
-                file_path = write_dividends_df_to_gcs(df, data_cat, tfd_bucket_nm, tfd_dir_nm, "market_dt", ["symbol", "market_dt"], tfd_file_type, tfd_save_mode, batch_dt, start_dt, end_dt)
+                file_path = write_dividends_df_to_gcs(df, data_cat, tfd_bucket_nm, tfd_bucket_dir_path, "market_dt", ["symbol", "market_dt"], tfd_file_type, tfd_save_mode, batch_dt, start_dt, end_dt)
         except Exception as e:
-                return {"status": "error", "message": f"Error writing transformed data to GCS: {e}"}, 500
+                logger.error(f"Error writing transformed data to GCS: {e}"); return False
         
-        return {"status": "success", "message": f"Data transformed and written to GCS at path: {file_path}"}, 200
+        logger.info(f"Data transformed and written to GCS at path: {file_path}")
+        return True
 

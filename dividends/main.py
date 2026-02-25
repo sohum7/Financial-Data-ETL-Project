@@ -1,6 +1,7 @@
 from src.extract.extractor import extract_generic as extract_generic_main
 from src.transform.transformer import transform_dividends as transform_dividends_main
 from src.load.loader import load as load_main
+from src.clients.gcp_logging import GCPLogger
 
 
 
@@ -24,13 +25,15 @@ from src.load.loader import load as load_main
 # TODO:
 # HANDLE EXCEPTIONS IN THE LOGIC FUNCTIONS
 
-
 def extract_functions_entry_point(request):
+    extract(request)
+
+def extract(request):
     # Parse JSON body
     request_json = request.get_json(silent=True)
     if not request_json:
         return {"error": "Missing JSON body"}, 400
-
+    
     # Required parameters
     data_cat = request_json.get("data_category")
     base_url = request_json.get("base_url")
@@ -50,8 +53,9 @@ def extract_functions_entry_point(request):
     # Optional kwargs (future-proofing)
     optional_kwargs = request_json.get("options", {})
     
-    # Call the pure extractor logic
-    json_status_res = extract_generic_main(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, **optional_kwargs)
+    with GCPLogger() as gcp_logger:
+        # Call the pure extractor logic
+        json_status_res = extract_generic_main(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
     return json_status_res
 
 def transform(request):
