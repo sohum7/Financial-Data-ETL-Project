@@ -1,5 +1,4 @@
 from json import dumps as json_dumps
-from google.cloud import storage, bigquery as bq
 from pyspark.sql import SparkSession
 #from datetime import datetime
 
