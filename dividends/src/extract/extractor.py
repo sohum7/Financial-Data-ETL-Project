@@ -1,7 +1,7 @@
 import requests as req
 from requests.exceptions import HTTPError, RequestException
 from json import JSONDecodeError
-from dividends.src.clients.gcp_services import write_json_to_gcs
+from src.clients.gcp_services import write_json_to_gcs
 
 def extract_generic(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
     max_req_rows = kwargs.get("min_rows", 5*len(symbols))
