@@ -11,11 +11,11 @@ steps:
           --runtime=python310 \
           --region=us-central1 \
           --service-account=market-stack-func-gcs-uploader@project-e6aecb7b-2aa0-4815-8c3.iam.gserviceaccount.com \
-          --entry-point=extract_entry_point \
+          --entry-point=extract_functions_entry_point \
           --source=dividends \
           --allow-unauthenticated \
           --trigger-http \
-          --timeout=720s;
+          --timeout=480s;
         then
           echo "Cloud Function deployed successfully."
         else
