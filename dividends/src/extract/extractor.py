@@ -2,6 +2,7 @@ import requests as req
 from requests.exceptions import HTTPError, RequestException
 from json import JSONDecodeError
 from src.clients.gcp_services import write_json_to_gcs
+from src.utilities import http_return
 
 def extract_generic(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
     max_req_rows = kwargs.get("min_rows", 5*len(symbols))
@@ -37,14 +38,23 @@ def extract_generic(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_
     
     # Exception Handling
     except HTTPError as e:
-        logger.error(f"HTTP error occurred: {e}"); return False
+        msg = f"HTTP error occurred: {e}"
+        logger.error(msg)
+        return http_return(500, msg)
     except RequestException as e:
-        logger.error(f"API request failed: {e}"); return False
+        msg = f"API request failed: {e}"
+        logger.error(msg)
+        return http_return(500, msg)
     except JSONDecodeError as e:
-        logger.error(f"Error parsing API response to JSON: {e}"); return False
+        msg = f"Error parsing API response to JSON: {e}"
+        logger.error(msg)
+        return http_return(500, msg)
     except Exception as e:
-        logger.error(f"An unexpected error occurred: {e}"); return False
+        msg = f"An unexpected error occurred: {e}"
+        logger.error(msg)
+        return http_return(500, msg)
     
     # Extraction succeeded
-    logger.error(f"Data extracted and written to GCS: {file_path}")
-    return True
+    msg = f"Data extracted and written to GCS: {file_path}"
+    logger.error(msg)
+    return http_return(200, msg)

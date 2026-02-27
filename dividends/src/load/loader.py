@@ -1,5 +1,6 @@
 from google.cloud import bigquery as bq
 from src.clients.gcp_services import MS_FILE_NM_WO_EXT, GCS_FILE_PATH, GCS_DIR_PATH
+from src.utilities import http_return
 
 
 def load(data_cat, bucket_nm, bucket_dir_path, dataset_nm, batch_dt, start_dt, end_dt, logger, **kwargs):
@@ -8,27 +9,46 @@ def load(data_cat, bucket_nm, bucket_dir_path, dataset_nm, batch_dt, start_dt, e
         bq_client = bq.Client()
         match data_cat:
             case "dividends": create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, data_cat, dataset_nm)
-            case _: print("Unknown data category")
+            case _: 
+                msg = "Unknown data category"
+                logger.error(msg)
+                return http_return(500, msg)
         
-        if create_tgt_tbl_job.error_result:  return {"status": "error", "message": f"Error creating target table: {create_tgt_tbl_job.error_result}"}
+        if create_tgt_tbl_job.error_result:
+            msg = f"Error creating target table: {create_tgt_tbl_job.error_result}"
+            logger.error(msg)
+            return http_return(500, msg)
         
         # Create staging table if it does not exist
         create_stg_tbl_job = create_stg_tbl(bq_client, data_cat, dataset_nm, batch_dt)
-        if create_stg_tbl_job.error_result:  return {"status": "error", "message": f"Error creating staging table: {create_stg_tbl_job.error_result}"}
+        if create_stg_tbl_job.error_result:
+            msg = f"Error creating staging table: {create_stg_tbl_job.error_result}"
+            logger.error(msg)
+            return http_return(500, msg)
         
         # Load the transformed data from GCS to the staging table in BigQuery
         file_nm = MS_FILE_NM_WO_EXT(data_cat, batch_dt, start_dt, end_dt)
-        gcs_file_path = GCS_FILE_PATH(batch_dt, bucket_nm, bucket_dir_path, f"{file_nm}*.parquet")  # Load all parquet files for this batch into the staging table
+        #gcs_file_path = GCS_FILE_PATH(batch_dt, bucket_nm, bucket_dir_path, f"{file_nm}*.parquet")  # Load all parquet files for this batch into the staging table
         load_to_stg_tbl_job = load_to_stg_tbl(bq_client, data_cat, bucket_nm, bucket_dir_path, dataset_nm, f"staging_ms_{data_cat}_{batch_dt}", partition_col="market_dt", cluster_cols=["symbol", "market_dt"], save_mode="WRITE_TRUNCATE", batch_dt=batch_dt)
-        if load_to_stg_tbl_job.errors:  return {"status": "error", "message": f"Error loading data to staging table: {load_to_stg_tbl_job.errors}"}
+        if load_to_stg_tbl_job.errors:
+            msg = f"Error loading data to staging table: {load_to_stg_tbl_job.errors}"
+            logger.error(msg)
+            return http_return(500, msg)
         
         merge_stg_to_tgt_tbl_job = merge_stg_to_tgt_tbl(bq_client, data_cat, dataset_nm, batch_dt)
-        if merge_stg_to_tgt_tbl_job.error_result:  return {"status": "error", "message": f"Error merging staging to target table: {merge_stg_to_tgt_tbl_job.error_result}"}
+        if merge_stg_to_tgt_tbl_job.error_result:
+            msg = f"Error merging staging to target table: {merge_stg_to_tgt_tbl_job.error_result}"
+            logger.error(msg)
+            return http_return(500, msg)
     
     except Exception as e:
-        return {"status": "error", "message": f"Error loading data to BigQuery: {e}"}
+        msg = f"Error loading data to BigQuery: {e}"
+        logger.error(msg)
+        return http_return(500, msg)
     
-    return {"status": "success", "message": f"Loading to BigQuery is complete"}
+    msg = f"Loading to BigQuery is complete"
+    logger.info(msg)
+    return http_return(200, msg)
     
 def create_dividends_tgt_tbl(bq_client, data_cat, dataset_nm):
     create_tbl_query = \

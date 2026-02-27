@@ -1,5 +1,6 @@
 from pyspark.sql.functions import col, explode
 from src.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
+from src.utilities import http_return
 
 def transform_dividends(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_nm, tfd_bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
         tfd_file_type = kwargs.get("tfd_file_type", "parquet")
@@ -8,7 +9,9 @@ def transform_dividends(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket
         try:
                 df = read_json_from_gcs(data_cat, raw_bucket_nm, raw_bucket_dir_path, batch_dt, with_spark=True, **kwargs) # read_json_from_gcs_with_spark(spark, raw_bucket_nm, raw_dir_nm, batch_dt)
         except Exception as e:
-                return logger.error(f"Error reading raw JSON data from GCS: {e}"); return False
+                msg = f"Error reading raw JSON data from GCS: {e}"
+                logger.error(msg)
+                return http_return(500, msg)
         
         # Flatten the nested JSON structure and select the relevant fields
         df = df.select(explode(col("data")).alias("record")).select("record.*")
@@ -57,8 +60,11 @@ def transform_dividends(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket
         try:
                 file_path = write_dividends_df_to_gcs(df, data_cat, tfd_bucket_nm, tfd_bucket_dir_path, "market_dt", ["symbol", "market_dt"], tfd_file_type, tfd_save_mode, batch_dt, start_dt, end_dt)
         except Exception as e:
-                logger.error(f"Error writing transformed data to GCS: {e}"); return False
+                msg = f"Error writing transformed data to GCS: {e}"
+                logger.error(msg)
+                return http_return(500, msg)
         
-        logger.info(f"Data transformed and written to GCS at path: {file_path}")
-        return True
+        msg = f"Data transformed and written to GCS at path: {file_path}"
+        logger.info(msg)
+        return http_return(200, msg)
 

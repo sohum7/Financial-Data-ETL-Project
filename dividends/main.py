@@ -2,6 +2,7 @@ from src.extract.extractor import extract_generic as extract_generic_main
 from src.transform.transformer import transform_dividends as transform_dividends_main
 from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
+from src.utilities import http_return
 
 
 
@@ -32,7 +33,7 @@ def extract(request):
     # Parse JSON body
     request_json = request.get_json(silent=True)
     if not request_json:
-        return {"error": "Missing JSON body"}, 400
+        return http_return(400, "Missing JSON body")
     
     # Required parameters
     data_cat = request_json.get("data_category")
@@ -48,7 +49,7 @@ def extract(request):
     # Validate required fields
     missing = [p for p in ["data_category", "base_url", "symbols", "api_key", "bucket_name", "bucket_directory_name", "batch_date", "start_date", "end_date"] if not request_json.get(p)]
     if missing:
-        return {"error": f"Missing required fields: {missing}"}, 400
+        return http_return(400, f"Missing required fields: {missing}")
 
     # Optional kwargs (future-proofing)
     optional_kwargs = request_json.get("options", {})
@@ -62,12 +63,12 @@ def transform(request):
     # Parse JSON body
     request_json = request.get_json(silent=True)
     if not request_json:
-        return {"status": "error", "message": "Missing JSON body"}, 400
+        return http_return(400, "Missing JSON body")
     
     if request_json.get("data_category") == "dividends":
         return transform_dividends(request)
     else:
-        return {"status": "error", "message": f"Unsupported data category: {request_json.get('data_category')}"}, 400
+        return http_return(400, f"Unsupported data category: {request_json.get('data_category')}")
 
 def transform_dividends(request_json):
     data_cat = "dividends"
@@ -87,7 +88,7 @@ def transform_dividends(request_json):
     # Validate required fields
     missing = [p for p in ["raw_bucket_name", "raw_directory_name", "transformed_bucket_name", "transformed_directory_name", "transformed_file_type", "transformed_save_mode", "batch_date", "start_date", "end_date"] if not request_json.get(p)]
     if missing:
-        return {"error": f"Missing required fields: {missing}"}, 400
+        return http_return(400, f"Missing required fields: {missing}")
 
     # Optional kwargs (future-proofing)
     optional_kwargs = request_json.get("options", {})
@@ -101,7 +102,7 @@ def load(request):
     # Parse JSON body
     request_json = request.get_json(silent=True)
     if not request_json:
-        return {"status": "error", "message": "Missing JSON body"}, 400
+        return http_return(400, "Missing JSON body")
     
     # Required parameters
     data_cat = request_json.get("data_category")
@@ -115,7 +116,7 @@ def load(request):
     # Validate required fields
     missing = [p for p in ["data_category", "bucket_name", "bucket_directory_name", "dataset_name", "batch_date", "start_date", "end_date"] if not request_json.get(p)]
     if missing:
-        return {"status": "error", "message": f"Missing required fields: {missing}"}, 400
+        return http_return(400, f"Missing required fields: {missing}")
     
     # Optional kwargs (future-proofing)
     optional_kwargs = request_json.get("options", {})
