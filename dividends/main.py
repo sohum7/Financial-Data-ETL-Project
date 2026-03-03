@@ -124,3 +124,4 @@ def load(request):
     # Call the pure load logic
     json_status_res = load_main(data_cat, bucket_nm, bucket_dir_nm, dataset_nm, batch_dt, start_dt, end_dt, **optional_kwargs)
     return json_status_res
+
