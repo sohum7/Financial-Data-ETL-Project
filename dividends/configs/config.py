@@ -20,8 +20,8 @@ ms_cfg = config["MARKET_STACK_METADATA"]
 ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
 
 MS_CAT = ms_div_cfg["name"]
-MS_SYMBOLS = ms_div_cfg["symbols"]
-MS_BASE_URL = ms_div_cfg["base_url"]
+MS_SYMBOLS = ms_cfg["symbols"]
+MS_BASE_URL = ms_cfg["base_url"]
 
 MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}"
 
