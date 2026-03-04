@@ -4,13 +4,13 @@ from json import JSONDecodeError
 from src.clients.gcp_services import write_json_to_gcs
 from src.utilities import http_return
 
-def extract_generic(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
-    max_req_rows = kwargs.get("min_rows", 5*len(symbols))
+def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
+    max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst))  # Default to 5 rows per symbol if not provided
     req_limit = kwargs.get("limit", max_req_rows)
     sort_type = kwargs.get("sort", "ASC")
     
     # company symbols from which to extract data from
-    symbols_params_str = ",".join(symbols)
+    symbols_params_str = ",".join(symbols_lst)
     
     # API request to Marketstack
     req_params = {

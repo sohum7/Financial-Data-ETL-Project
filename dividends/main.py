@@ -2,7 +2,8 @@ from src.extract.extractor import extract_generic as extract_generic_main
 from src.transform.transformer import transform_dividends as transform_dividends_main
 from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
-from src.utilities import http_return
+from src.utilities import getCurWkDtRange, http_return
+from json import dumps as json_dumps
 
 
 
@@ -26,19 +27,33 @@ from src.utilities import http_return
 # TODO:
 # HANDLE EXCEPTIONS IN THE LOGIC FUNCTIONS
 
-def extract_functions_entry_point(request):
-    return extract(request)
+def extract_dividends(_request):
+    # _request not needed for now but keeping it for future-proofing and consistency with transform and load functions. we can remove it later if we decide it's not needed.
+    
+    # for testing (this will be within airflow later)
+    todays_dt, past_monday_dt, past_friday_dt = getCurWkDtRange()
+    request = { "data_category": "dividends", \
+                "base_url": "http://api.marketstack.com/v1/dividends", \
+                "symbols": ["AAPL", "MSFT", "GOOGL"], \
+                "api_key": "your_api_key", \
+                "bucket_name": "your_bucket_name", \
+                "bucket_directory_name": "bronze/dividends/", \
+                "batch_date": todays_dt, \
+                "start_date": past_monday_dt, \
+                "end_date": past_friday_dt}
+    return extract(json_dumps(request))
 
 def extract(request):
     # Parse JSON body
     request_json = request.get_json(silent=True)
+    
     if not request_json:
         return http_return(400, "Missing JSON body")
     
     # Required parameters
     data_cat = request_json.get("data_category")
     base_url = request_json.get("base_url")
-    symbols = request_json.get("symbols")
+    symbols_lst = request_json.get("symbols")
     api_key = request_json.get("api_key")
     bucket_nm = request_json.get("bucket_name")
     bucket_dir_nm= request_json.get("bucket_directory_name")
@@ -56,7 +71,7 @@ def extract(request):
     
     with GCPLogger() as gcp_logger:
         # Call the pure extractor logic
-        json_status_res = extract_generic_main(data_cat, base_url, symbols, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
+        json_status_res = extract_generic_main(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
     return json_status_res
 
 def transform(request):
