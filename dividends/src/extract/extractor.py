@@ -1,3 +1,4 @@
+from datetime import datetime
 import requests as req
 from requests.exceptions import HTTPError, RequestException
 from json import JSONDecodeError
@@ -9,6 +10,16 @@ def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
     req_limit = kwargs.get("limit", max_req_rows)
     sort_type = kwargs.get("sort", "ASC")
     
+    if start_dt > end_dt:
+        msg = f"Invalid date range: start_date {start_dt} is after end_date {end_dt}"
+        logger.error(msg)
+        return http_return(400, msg)
+    
+    if isinstance(start_dt, datetime):
+        start_dt = start_dt.strftime("%Y-%m-%d")
+    if isinstance(end_dt, datetime):
+        end_dt = end_dt.strftime("%Y-%m-%d")
+    
     # company symbols from which to extract data from
     symbols_params_str = ",".join(symbols_lst)
     
@@ -17,8 +28,8 @@ def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
         "access_key": api_key,
         "symbols": symbols_params_str,
         "limit": req_limit,
-        "date_from": start_dt.strftime("%Y-%m-%d"),
-        "date_to": end_dt.strftime("%Y-%m-%d"),
+        "date_from": start_dt,
+        "date_to": end_dt,
         "sort": sort_type
     }
     
