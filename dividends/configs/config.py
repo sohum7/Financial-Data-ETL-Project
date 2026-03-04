@@ -16,23 +16,26 @@ config = configparser.ConfigParser()
 config.read(BASE_DIR / "config.ini") # Load base first
 config.read(BASE_DIR / f"config.{env}.ini") # Then environment override
 
-MS_DIVIDENDS = config["DIVIDENDS_METADATA"]["name"]
-MS_DIVIDENDS_BASE_URL = config["DIVIDENDS_METADATA"]["base_url"]
-MS_DIVIDENDS_DIVIDENDS_URL = MS_DIVIDENDS_BASE_URL + MS_DIVIDENDS
-MS_DIVIDENDS_SYMBOLS = config["DIVIDENDS_METADATA"]["symbols"]
+div_cfg = config["DIVIDENDS_METADATA"]
+
+MS_CAT = div_cfg["name"]
+MS_SYMBOLS = div_cfg["symbols"]
+MS_BASE_URL = div_cfg["base_url"]
+
+MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}"
 
 ## Extract source data
-MS_DIVIDENDS_RAW_FILE_TYPE = config["DIVIDENDS_METADATA"]["raw_file_type"]
-MS_DIVIDENDS_RAW_FILE_BUCKET = config["DIVIDENDS_METADATA"]["raw_file_bucket"]
-MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR = config["DIVIDENDS_METADATA"]["raw_file_bucket_subdir"]
+MS_DIV_RAW_FILE_TYPE = div_cfg["raw_file_type"]
+MS_DIV_RAW_FILE_BUCKET_NM = div_cfg["raw_file_bucket"]
+MS_DIV_RAW_FILE_BUCKET_SUBDIR = div_cfg["raw_file_bucket_subdir"]
 
 ## Transformed data
-MS_DIVIDENDS_TFD_FILE_TYPE = "delta"
-MS_DIVIDENDS_TFD_FILE_BUCKET = "market-stack-data-dev"
-MS_DIVIDENDS_TFD_FILE_BUCKET_SUBDIR = "silver/dividends/"
+MS_DIV_TFD_FILE_TYPE = div_cfg["tfd_file_type"]
+MS_DIV_TFD_FILE_BUCKET_NM = div_cfg["tfd_file_bucket"]
+MS_DIV_TFD_FILE_BUCKET_SUBDIR = div_cfg["tfd_file_bucket_subdir"]
 
 ## Cleaned data
-MS_DIVIDENDS_CLN_FILE_TYPE = "parquet"
-MS_DIVIDENDS_CLN_FILE_BUCKET = "market-stack-data-dev"
-MS_DIVIDENDS_CLN_FILE_BUCKET_SUBDIR = "gold/dividends/"
+MS_DIV_CLN_FILE_TYPE = div_cfg["cln_file_type"]
+MS_DIV_CLN_FILE_BUCKET_NM = div_cfg["cln_file_bucket"]
+MS_DIV_CLN_FILE_BUCKET_SUBDIR = div_cfg["cln_file_bucket_subdir"]
 
