@@ -4,6 +4,7 @@ from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
 from src.utilities import getCurWkDtRange, http_return
 from json import dumps as json_dumps
+from json import loads as json_loads
 
 
 
@@ -45,7 +46,7 @@ def extract_dividends(_request):
 
 def extract(request):
     # Parse JSON body
-    request_json = request.get_json(silent=True)
+    request_json = json_loads(request) if isinstance(request, str) else request.get_json(silent=True)
     
     if not request_json:
         return http_return(400, "Missing JSON body")
