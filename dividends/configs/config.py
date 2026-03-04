@@ -16,26 +16,27 @@ config = configparser.ConfigParser()
 config.read(BASE_DIR / "config.ini") # Load base first
 config.read(BASE_DIR / f"config.{env}.ini") # Then environment override
 
-div_cfg = config["DIVIDENDS_METADATA"]
+ms_cfg = config["MARKET_STACK_METADATA"]
+ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
 
-MS_CAT = div_cfg["name"]
-MS_SYMBOLS = div_cfg["symbols"]
-MS_BASE_URL = div_cfg["base_url"]
+MS_CAT = ms_div_cfg["name"]
+MS_SYMBOLS = ms_div_cfg["symbols"]
+MS_BASE_URL = ms_div_cfg["base_url"]
 
 MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}"
 
 ## Extract source data
-MS_DIV_RAW_FILE_TYPE = div_cfg["raw_file_type"]
-MS_DIV_RAW_FILE_BUCKET_NM = div_cfg["raw_file_bucket"]
-MS_DIV_RAW_FILE_BUCKET_SUBDIR = div_cfg["raw_file_bucket_subdir"]
+MS_DIV_RAW_FILE_TYPE = ms_div_cfg["raw_file_type"]
+MS_DIV_RAW_FILE_BUCKET_NM = ms_div_cfg["raw_file_bucket"]
+MS_DIV_RAW_FILE_BUCKET_SUBDIR = ms_div_cfg["raw_file_bucket_subdir"]
 
 ## Transformed data
-MS_DIV_TFD_FILE_TYPE = div_cfg["tfd_file_type"]
-MS_DIV_TFD_FILE_BUCKET_NM = div_cfg["tfd_file_bucket"]
-MS_DIV_TFD_FILE_BUCKET_SUBDIR = div_cfg["tfd_file_bucket_subdir"]
+MS_DIV_TFD_FILE_TYPE = ms_div_cfg["tfd_file_type"]
+MS_DIV_TFD_FILE_BUCKET_NM = ms_div_cfg["tfd_file_bucket"]
+MS_DIV_TFD_FILE_BUCKET_SUBDIR = ms_div_cfg["tfd_file_bucket_subdir"]
 
 ## Cleaned data
-MS_DIV_CLN_FILE_TYPE = div_cfg["cln_file_type"]
-MS_DIV_CLN_FILE_BUCKET_NM = div_cfg["cln_file_bucket"]
-MS_DIV_CLN_FILE_BUCKET_SUBDIR = div_cfg["cln_file_bucket_subdir"]
+MS_DIV_CLN_FILE_TYPE = ms_div_cfg["cln_file_type"]
+MS_DIV_CLN_FILE_BUCKET_NM = ms_div_cfg["cln_file_bucket"]
+MS_DIV_CLN_FILE_BUCKET_SUBDIR = ms_div_cfg["cln_file_bucket_subdir"]
 
