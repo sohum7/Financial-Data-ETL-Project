@@ -19,10 +19,10 @@ config.read(BASE_DIR / f"config.{env}.ini") # Then environment override
 ms_cfg = config["MARKET_STACK_METADATA"]
 ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
 
-MS_CAT = ms_div_cfg["name"]
 MS_SYMBOLS = ms_cfg["symbols"]
 MS_BASE_URL = ms_cfg["base_url"]
 
+MS_CAT = ms_div_cfg["name"]
 MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}"
 
 ## Extract source data

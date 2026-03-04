@@ -17,8 +17,9 @@ GCS_DIR_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM: f"{GCS_PREFIX}{BUCKET_NM}/{DI
 GCS_FILE_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM, FILE_NM: f"{GCS_DIR_PATH(BATCH_DT, BUCKET_NM, DIR_NM)}{FILE_NM}"
 
 def get_secret(secret_name):
+    project_id = os_environ.get("GOOGLE_CLOUD_PROJECT")
     client = secretmanager.SecretManagerServiceClient()
-    name = f"projects/{os_environ['GCP_PROJECT']}/secrets/{secret_name}/versions/latest"
+    name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})
     return response.payload.data.decode("UTF-8")
 
