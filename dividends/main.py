@@ -1,10 +1,12 @@
+from json import dumps as json_dumps
+from json import loads as json_loads
+
 from src.extract.extractor import extract_generic as extract_generic_main
 from src.transform.transformer import transform_dividends as transform_dividends_main
 from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
+from src.clients.gcp_services import get_secret as gcp_get_secret
 from src.utilities import getCurWkDtRange, http_return
-from json import dumps as json_dumps
-from json import loads as json_loads
 from configs.config import MS_DIVIDENDS, MS_DIVIDENDS_API_KEY, MS_DIVIDENDS_DIVIDENDS_URL, MS_DIVIDENDS_SYMBOLS, MS_DIVIDENDS_RAW_FILE_BUCKET, MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR, MS_DIVIDENDS_TFD_FILE_BUCKET, MS_DIVIDENDS_TFD_FILE_BUCKET_SUBDIR, MS_DIVIDENDS_CLN_FILE_BUCKET, MS_DIVIDENDS_CLN_FILE_BUCKET_SUBDIR
 
 
@@ -32,12 +34,13 @@ from configs.config import MS_DIVIDENDS, MS_DIVIDENDS_API_KEY, MS_DIVIDENDS_DIVI
 def extract_dividends(_request):
     # _request not needed for now but keeping it for future-proofing and consistency with transform and load functions. we can remove it later if we decide it's not needed.
     
+    MS_V2_API_KEY = gcp_get_secret("MARKET_STACK_V2_API_KEY")
     # for testing (this will be within airflow later)
     todays_dt, past_monday_dt, past_friday_dt = getCurWkDtRange()
     request = { "data_category": MS_DIVIDENDS, \
                 "base_url": MS_DIVIDENDS_DIVIDENDS_URL, \
                 "symbols": MS_DIVIDENDS_SYMBOLS, \
-                "api_key": MS_DIVIDENDS_API_KEY, \
+                "api_key": MS_V2_API_KEY, \
                 "bucket_name": MS_DIVIDENDS_RAW_FILE_BUCKET, \
                 "bucket_directory_name": MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR, \
                 "batch_date": todays_dt, \

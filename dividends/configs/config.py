@@ -17,7 +17,6 @@ config.read(BASE_DIR / "config.ini") # Load base first
 config.read(BASE_DIR / f"config.{env}.ini") # Then environment override
 
 MS_DIVIDENDS = config["DIVIDENDS_METADATA"]["name"]
-MS_DIVIDENDS_API_KEY = config["MARKET_STACK_METADATA"]["api_key"]
 MS_DIVIDENDS_BASE_URL = config["DIVIDENDS_METADATA"]["url"]
 MS_DIVIDENDS_DIVIDENDS_URL = MS_DIVIDENDS_BASE_URL + MS_DIVIDENDS
 MS_DIVIDENDS_SYMBOLS = config["DIVIDENDS_METADATA"]["symbols"]

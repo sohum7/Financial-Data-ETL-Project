@@ -1,7 +1,8 @@
-from datetime import datetime
 import requests as req
 from requests.exceptions import HTTPError, RequestException
+from datetime import datetime
 from json import JSONDecodeError
+
 from src.clients.gcp_services import write_json_to_gcs
 from src.utilities import http_return
 

@@ -1,6 +1,10 @@
 from json import dumps as json_dumps
 from pyspark.sql import SparkSession
 #from datetime import datetime
+from os import environ as os_environ
+from google.cloud import storage
+from google.cloud import secretmanager
+
 
 FILE_NM_DT_FORMAT = "%Y%m%d"
 # raw file format in gcs bucket for extracted data. This is used to construct the file name for the raw data stored in GCS. The file name is based on the data category, start date, end date, and file type (e.g., json).
@@ -12,6 +16,11 @@ GCS_PREFIX = "gs://"
 GCS_DIR_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM: f"{GCS_PREFIX}{BUCKET_NM}/{DIR_NM}/batch_date={BATCH_DT.strftime(FILE_NM_DT_FORMAT)}/"
 GCS_FILE_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM, FILE_NM: f"{GCS_DIR_PATH(BATCH_DT, BUCKET_NM, DIR_NM)}{FILE_NM}"
 
+def get_secret(secret_name):
+    client = secretmanager.SecretManagerServiceClient()
+    name = f"projects/{os_environ['GCP_PROJECT']}/secrets/{secret_name}/versions/latest"
+    response = client.access_secret_version(request={"name": name})
+    return response.payload.data.decode("UTF-8")
 
 def write_json_to_gcs(data_cat, data, bucket_nm, dir_nm, batch_dt, start_dt, end_dt) -> None:
     file_nm = MS_FILE_NM_W_EXT(data_cat, batch_dt, start_dt, end_dt, "json")
