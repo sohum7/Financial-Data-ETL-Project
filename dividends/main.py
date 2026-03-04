@@ -27,7 +27,7 @@ from src.utilities import http_return
 # HANDLE EXCEPTIONS IN THE LOGIC FUNCTIONS
 
 def extract_functions_entry_point(request):
-    extract(request)
+    return extract(request)
 
 def extract(request):
     # Parse JSON body
