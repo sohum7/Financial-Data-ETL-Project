@@ -5,6 +5,7 @@ from src.clients.gcp_logging import GCPLogger
 from src.utilities import getCurWkDtRange, http_return
 from json import dumps as json_dumps
 from json import loads as json_loads
+from configs.config import MS_DIVIDENDS, MS_DIVIDENDS_API_KEY, MS_DIVIDENDS_DIVIDENDS_URL, MS_DIVIDENDS_SYMBOLS, MS_DIVIDENDS_RAW_FILE_BUCKET, MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR, MS_DIVIDENDS_TFD_FILE_BUCKET, MS_DIVIDENDS_TFD_FILE_BUCKET_SUBDIR, MS_DIVIDENDS_CLN_FILE_BUCKET, MS_DIVIDENDS_CLN_FILE_BUCKET_SUBDIR
 
 
 
@@ -14,14 +15,14 @@ from json import loads as json_loads
 # file   - DIVIDENDS_20240101_20240107.json
 # blob   - {dir}{file} - bronze/dividends/DIVIDENDS_20240101_20240107.json
 # extract
-# input - start_dt, end_dt, data_catgy, symbols, api_key, url, bucket_nm, bucket_dir
+# input - start_dt, end_dt, data_cat, symbols, api_key, url, bucket_nm, bucket_dir
 # output - file path in gcs bucket where extracted data is stored
 # isnt base url the same?
 # 1 weeks worth of data for all symbols goes into 1 file in gcs bucket. file name is based on data category and date range of data.
 # extracting for dividends is similar to tickers, etc, but transforming is different based on the structure of data returned by marketstack api. so we can have a generic extract function but separate transform functions for each data category. or we can have separate extract and transform functions for each data category. we will go with the former approach to avoid code duplication in extract functions and have more modular code.
 
 # transform
-# input - start_dt, end_dt, data_catgy, symbols, raw_bucket_nm, raw_bucket_dir_nm, tfd_bucket_nm, tfd_bucket_dir_nm
+# input - start_dt, end_dt, data_cat, symbols, raw_bucket_nm, raw_bucket_dir_nm, tfd_bucket_nm, tfd_bucket_dir_nm
 # output - multiple files in gcs bucket where transformed data is stored. file format is delta lake. file name is based on data category and date range of data.
 
 
@@ -33,12 +34,12 @@ def extract_dividends(_request):
     
     # for testing (this will be within airflow later)
     todays_dt, past_monday_dt, past_friday_dt = getCurWkDtRange()
-    request = { "data_category": "dividends", \
-                "base_url": "http://api.marketstack.com/v1/dividends", \
-                "symbols": ["AAPL", "MSFT", "GOOGL"], \
-                "api_key": "your_api_key", \
-                "bucket_name": "your_bucket_name", \
-                "bucket_directory_name": "bronze/dividends/", \
+    request = { "data_category": MS_DIVIDENDS, \
+                "base_url": MS_DIVIDENDS_DIVIDENDS_URL, \
+                "symbols": MS_DIVIDENDS_SYMBOLS, \
+                "api_key": MS_DIVIDENDS_API_KEY, \
+                "bucket_name": MS_DIVIDENDS_RAW_FILE_BUCKET, \
+                "bucket_directory_name": MS_DIVIDENDS_RAW_FILE_BUCKET_SUBDIR, \
                 "batch_date": todays_dt, \
                 "start_date": past_monday_dt, \
                 "end_date": past_friday_dt}
