@@ -54,4 +54,4 @@ steps:
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  substitution_option: 'ALLOW_LOOSE'
+  substitutionOption: 'ALLOW_LOOSE'
