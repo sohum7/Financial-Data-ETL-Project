@@ -19,7 +19,7 @@ steps:
           --runtime=python310 \
           --region=us-central1 \
           --project=$$GOOGLE_CLOUD_PROJECT \
-          --service-account=market-stack-func-gcs-uploader@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
+          --service-account=market-stack-func-gcs-uploader@$$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
           --source=dividends \
           --allow-unauthenticated \
