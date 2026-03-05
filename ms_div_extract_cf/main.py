@@ -1,14 +1,17 @@
 from json import dumps as json_dumps
 from json import loads as json_loads
 
-from src.extractor import extract_handler as run_extract
+#from src.extractor import extract_handler as run_extract
 
 from shared.clients.gcp_logging import GCPLogger
 from shared.clients.gcp_services import get_secret as gcp_get_secret
 from shared.misc.utilities import getCurWkDtRange, http_return
 from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
-
+import os
+BASE_DIR = os.path.dirname(__file__)
+with GCPLogger() as gcp_logger:
+    gcp_logger.info(f"Current working directory: {BASE_DIR}")
 
 # for references
 # bucket - market-stack-....-dev
@@ -81,8 +84,9 @@ def extract_dividends(_request):
 
     # Optional kwargs (future-proofing)
     optional_kwargs = request.get("options", {})
-    
+    json_status_res = 200
     with GCPLogger() as gcp_logger:
         # Call the pure extractor logic
-        json_status_res = run_extract(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
+        #json_status_res = run_extract(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
+        pass
     return json_status_res
