@@ -12,10 +12,9 @@ steps:
         # DEBUG: print substitutions at runtime
         echo "==============================="
         echo "==== Debug Build Variables ===="
-        echo "_PROJECT=$_PROJECT"
-        echo "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT"
-        echo "ENVIRONMENT=$ENVIRONMENT"
-        echo "BUCKET_SUFFIX=$BUCKET_SUFFIX"
+        echo "GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT"
+        echo "ENVIRONMENT=$$ENVIRONMENT"
+        echo "BUCKET_SUFFIX=$$BUCKET_SUFFIX"
 
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
@@ -49,7 +48,7 @@ steps:
       - |
         echo "**** Copying transfer.py to GCS bucket... ****"
         gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py;
-        
+
         if [ $? -eq 0 ]; then
           echo "File copied successfully."
         else
