@@ -8,6 +8,8 @@ steps:
     args:
       - -c
       - |
+        set -e  # exit immediately if a command exits with a non-zero status, and prevents partial deployment
+        
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
         # DEBUG: print substitutions at runtime
@@ -28,8 +30,8 @@ steps:
         cp  dividends/extract/jobs/requirements.txt  ms_div_extract_cf/
 
         # Copy extraction logic
-        mkdir -p ms_div_extract_cf/src
-        cp  -r  dividends/extract/src/* ms_div_extract_cf/src/
+        mkdir  -p  ms_div_extract_cf/src
+        cp  dividends/extract/src/* ms_div_extract_cf/src/
         
         # Copy shared files
         cp  -r  dividends/shared  ms_div_extract_cf/
