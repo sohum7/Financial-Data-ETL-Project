@@ -1,4 +1,4 @@
-import google.cloud.logging
+from google.cloud import logging as google_cloud_logging
 import logging
 
 # Setup the library to work with standard Python logging
@@ -11,7 +11,7 @@ class GCPLogger:
         self.name = name
         
     def enable_logging(self):
-        self.client = google.cloud.logging.Client()
+        self.client = google_cloud_logging.Client()
         self.client.setup_logging()
         self.logger = logging.getLogger(self.name)
     
