@@ -31,10 +31,11 @@ steps:
 
         # Copy extraction logic
         mkdir  -p  ms_div_extract_cf/src
-        cp  dividends/extract/src/* ms_div_extract_cf/src/
+        cp  -r dividends/extract/src/.  ms_div_extract_cf/src/
         
         # Copy shared files
-        cp  -r  dividends/shared  ms_div_extract_cf/
+        mkdir  -p  ms_div_extract_cf/shared
+        cp  -r  dividends/shared/.  ms_div_extract_cf/shared/
 
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
