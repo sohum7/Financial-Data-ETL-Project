@@ -16,6 +16,25 @@ steps:
         echo "GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT"
         echo "ENVIRONMENT=$$ENVIRONMENT"
         echo "==============================="
+
+        rm  -rf  ms_div_extract_cf_package
+        mkdir  -p  ms_div_extract_cf_package
+
+        # Copy Cloud Function entrypoint
+        cp  dividends/extract/jobs/main.py  ms_div_extract_cf_package/
+
+        # Copy requirements file
+        cp  dividends/extract/jobs/requirements.txt  ms_div_extract_cf_package/
+
+        # Copy extraction logic
+        mkdir -p ms_div_extract_cf_package/src
+        cp  -r  dividends/extract/src/* ms_div_extract_cf_package/src/
+        
+        # Copy shared files
+        cp  -r  dividends/shared  ms_div_extract_cf_package/
+
+
+
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
           --runtime=python310 \

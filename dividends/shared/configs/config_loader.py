@@ -38,7 +38,7 @@ gc_env = env_vars["ENVIRONMENT"]
 ms_cfg = config["MARKET_STACK_METADATA"]
 ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
 
-MS_SYMBOLS = ms_cfg["symbols"]
+MS_SYMBOLS = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
 MS_BASE_URL = ms_cfg["base_url"]
 
 MS_CAT = ms_div_cfg["name"]
