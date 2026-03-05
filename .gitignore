@@ -1,3 +1,5 @@
 .vscode/
 spark-3.5.0-bin-hadoop3-scala2.13
 dividends/configs/config.prod.ini
+.env
+*.env
