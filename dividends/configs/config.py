@@ -46,16 +46,16 @@ MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}/"
 
 ## Extract source data
 MS_DIV_RAW_FILE_TYPE = ms_div_cfg["raw_file_type"]
-MS_DIV_RAW_FILE_BUCKET_NM = f"{ms_div_cfg['raw_file_bucket']}-{gc_env}"
+MS_DIV_RAW_FILE_BUCKET_NM = f"{ms_div_cfg['raw_file_bucket-base']}-{gc_env}"
 MS_DIV_RAW_FILE_BUCKET_SUBDIR = ms_div_cfg["raw_file_bucket_subdir"]
 
 ## Transformed data
 MS_DIV_TFD_FILE_TYPE = ms_div_cfg["tfd_file_type"]
-MS_DIV_TFD_FILE_BUCKET_NM = f"{ms_div_cfg['tfd_file_bucket']}-{gc_env}"
+MS_DIV_TFD_FILE_BUCKET_NM = f"{ms_div_cfg['tfd_file_bucket-base']}-{gc_env}"
 MS_DIV_TFD_FILE_BUCKET_SUBDIR = ms_div_cfg["tfd_file_bucket_subdir"]
 
 ## Cleaned data
 MS_DIV_CLN_FILE_TYPE = ms_div_cfg["cln_file_type"]
-MS_DIV_CLN_FILE_BUCKET_NM = f"{ms_div_cfg['cln_file_bucket']}-{gc_env}"
+MS_DIV_CLN_FILE_BUCKET_NM = f"{ms_div_cfg['cln_file_bucket-base']}-{gc_env}"
 MS_DIV_CLN_FILE_BUCKET_SUBDIR = ms_div_cfg["cln_file_bucket_subdir"]
 
