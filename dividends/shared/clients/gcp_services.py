@@ -2,8 +2,8 @@ from json import dumps as json_dumps
 from pyspark.sql import SparkSession
 #from datetime import datetime
 from os import environ as os_environ
-from google.cloud import storage
-from google.cloud import secretmanager
+from google.cloud import gc_storage
+from google.cloud import gc_secretmanager
 
 
 FILE_NM_DT_FORMAT = "%Y%m%d"
@@ -18,7 +18,7 @@ GCS_FILE_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM, FILE_NM: f"{GCS_DIR_PATH(BAT
 
 def get_secret(secret_name):
     project_id = os_environ.get("GOOGLE_CLOUD_PROJECT")
-    client = secretmanager.SecretManagerServiceClient()
+    client = gc_secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})
     return response.payload.data.decode("UTF-8")
@@ -27,7 +27,7 @@ def write_json_to_gcs(data_cat, data, bucket_nm, dir_nm, batch_dt, start_dt, end
     file_nm = MS_FILE_NM_W_EXT(data_cat, batch_dt, start_dt, end_dt, "json")
     blob_nm = GCS_FILE_PATH(batch_dt, bucket_nm, dir_nm, file_nm)
     
-    storage_client = storage.Client()
+    storage_client = gc_storage.Client()
     bucket_obj = storage_client.bucket(bucket_nm)
     blob_obj = bucket_obj.blob(blob_nm)
 
@@ -41,7 +41,7 @@ def read_json_from_gcs(data_cat, bucket_nm, dir_nm, file_nm, batch_dt, with_spar
             return spark.read.json(GCS_FILE_PATH(batch_dt, bucket_nm, dir_nm, file_nm)).cache() # read the JSON data from GCS using Spark and return as Spark DataFrame. We will cache the DataFrame since we will be performing multiple transformations on it in the transform step, so caching will help improve performance by avoiding repeated reads from GCS.
         
     # else use native GCS client to read the JSON data from GCS and return as dict
-    storage_client = storage.Client()
+    storage_client = gc_storage.Client()
     bucket_obj = storage_client.bucket(bucket_nm)
     return bucket_obj.blob(GCS_FILE_PATH(batch_dt, bucket_nm, dir_nm, file_nm))
 
