@@ -8,14 +8,14 @@ steps:
     args:
       - -c
       - |
+        # Deploy the Cloud Function
+        echo "**** Deploying Cloud Function ****"
         # DEBUG: print substitutions at runtime
         echo "==============================="
         echo "==== Debug Build Variables ===="
         echo "GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT"
         echo "ENVIRONMENT=$$ENVIRONMENT"
-
-        # Deploy the Cloud Function
-        echo "**** Deploying Cloud Function ****"
+        echo "==============================="
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
           --runtime=python310 \
@@ -45,6 +45,8 @@ steps:
       - -c
       - |
         echo "**** Copying transfer.py to GCS bucket... ****"
+        #### NEED TO CHANGE TRANSFORM MAIN FILE SO THAT ITS SEPARATE FROM EXTRACT MAIN FILE, THEN UPDATE THIS STEP TO COPY TRANSFORM MAIN FILE INSTEAD OF EXTRACT MAIN FILE
+        gsutil cp dividends/main.py gs://market-stack-code-dev/dataproc/dividends/main.py;
         gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py;
 
         if [ $? -eq 0 ]; then
