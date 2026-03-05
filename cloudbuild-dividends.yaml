@@ -3,33 +3,41 @@ steps:
     id: 'Deploy Cloud Function'
     entrypoint: bash
     env:
+      - GOOGLE_CLOUD_PROJECT=$_PROJECT
       - ENVIRONMENT=$_ENV
       - BUCKET_SUFFIX=$_BUCKET_SUFFIX
-      - GOOGLE_CLOUD_PROJECT=$_PROJECT
     args:
       - -c
       - |
-        echo "**** Uploading Cloud Function source code... ****"
-        echo "Deploying function to project: $GOOGLE_CLOUD_PROJECT"
-        echo "ENVIRONMENT=$ENVIRONMENT, BUCKET_SUFFIX=$BUCKET_SUFFIX"
-        if gcloud functions deploy market-stack-dividends-extract \
+        # DEBUG: print substitutions at runtime
+        echo "==== Debug Build Variables ===="
+        echo "_PROJECT=$_PROJECT"
+        echo "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT"
+        echo "ENVIRONMENT=$ENVIRONMENT"
+        echo "BUCKET_SUFFIX=$BUCKET_SUFFIX"
+        echo "==============================="
+
+        # Deploy the Cloud Function
+        echo "**** Deploying Cloud Function ****"
+        gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
           --runtime=python310 \
           --region=us-central1 \
           --project="$GOOGLE_CLOUD_PROJECT" \
-          --service-account=market-stack-func-gcs-uploader@project-e6aecb7b-2aa0-4815-8c3.iam.gserviceaccount.com \
+          --service-account=market-stack-func-gcs-uploader@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
           --source=dividends \
-          --set-env-vars ENVIRONMENT=$ENVIRONMENT,BUCKET_SUFFIX=$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
           --allow-unauthenticated \
           --trigger-http \
           --min-instances=0 \
           --max-instances=1 \
-          --timeout=480s;
-        then
-          echo "Cloud Function deployed successfully."
+          --timeout=480s \
+          --set-env-vars ENVIRONMENT=$ENVIRONMENT,BUCKET_SUFFIX=$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
+
+        if [ $? -eq 0 ]; then
+          echo "✅ Cloud Function deployed successfully."
         else
-          echo "Failed to deploy Cloud Function."
+          echo "❌ Deployment failed."
           exit 1
         fi
 
