@@ -8,17 +8,8 @@ steps:
       - BUCKET_SUFFIX=$_BUCKET_SUFFIX
     args:
       - -c
-      - |
-        # DEBUG: print substitutions at runtime
-        echo "==== Debug Build Variables ===="
-        echo "_PROJECT=$_PROJECT"
-        echo "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT"
-        echo "ENVIRONMENT=$ENVIRONMENT"
-        echo "BUCKET_SUFFIX=$BUCKET_SUFFIX"
-        echo "==============================="
-
-        # Deploy the Cloud Function
-        echo "**** Deploying Cloud Function ****"
+      - '  # <- single quotes
+        echo "Deploying function to project: $GOOGLE_CLOUD_PROJECT"
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
           --runtime=python310 \
@@ -39,7 +30,7 @@ steps:
         else
           echo "❌ Deployment failed."
           exit 1
-        fi
+        fi '
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'Upload PySpark Job'
