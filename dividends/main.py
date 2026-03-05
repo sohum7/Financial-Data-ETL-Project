@@ -7,7 +7,7 @@ from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
 from src.clients.gcp_services import get_secret as gcp_get_secret
 from src.utilities import getCurWkDtRange, http_return
-from configs.config import MS_BASE_URL, MS_CAT, MS_DIV_URL, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
+from configs.config import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
 
 
