@@ -13,7 +13,7 @@ class GCPLogger:
     def enable_logging(self):
         self.client = gc_logging.Client()
         self.client.setup_logging()
-        self.logger = logging.getLogger(self.name)
+        #self.logger = logging.getLogger(self.name)
     
     def disable_logging(self):
         logging.shutdown()

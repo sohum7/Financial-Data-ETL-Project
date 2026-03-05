@@ -2,8 +2,8 @@ from json import dumps as json_dumps
 from pyspark.sql import SparkSession
 #from datetime import datetime
 from os import environ as os_environ
-from google.cloud import gc_storage
-from google.cloud import gc_secretmanager
+from google.cloud import storage as gc_storage
+from google.cloud import secretmanager as gc_secretmanager
 
 
 FILE_NM_DT_FORMAT = "%Y%m%d"

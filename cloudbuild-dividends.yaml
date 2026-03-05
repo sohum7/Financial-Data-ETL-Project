@@ -13,11 +13,11 @@ steps:
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
         # DEBUG: print substitutions at runtime
-        echo "==============================="
-        echo "==== Debug Build Variables ===="
+        echo ===================================================
+        echo =========+==== Debug Build Variables ==============
         echo "GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT"
         echo "ENVIRONMENT=$$ENVIRONMENT"
-        echo "==============================="
+        echo ===================================================
 
         # Prepare the Cloud Function source code directory
         rm  -rf  ms_div_extract_cf
