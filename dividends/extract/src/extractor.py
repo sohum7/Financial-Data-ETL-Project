@@ -1,10 +1,10 @@
-import requests as req
+from requests import get as requests_get
 from requests.exceptions import HTTPError, RequestException
 from datetime import datetime
 from json import JSONDecodeError
 
-from src.clients.gcp_services import write_json_to_gcs
-from src.utilities import http_return
+from shared.clients.gcp_services import write_json_to_gcs
+from shared.misc.utilities import http_return
 
 def extract_handler(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
     max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst))  # Default to 5 rows per symbol if not provided
@@ -69,7 +69,7 @@ def extract_handler(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
     
 def extract_generic_main(full_url, req_params):
     # make the API request
-    res = req.get(full_url, params=req_params)
+    res = requests_get(full_url, params=req_params)
     res.raise_for_status()  # Raise an error for HTTP errors
     
     # Parse the JSON response

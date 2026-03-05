@@ -1,9 +1,10 @@
 from google.cloud import bigquery as bq
-from src.clients.gcp_services import MS_FILE_NM_WO_EXT, GCS_FILE_PATH, GCS_DIR_PATH
-from src.utilities import http_return
+
+from shared.clients.gcp_services import MS_FILE_NM_WO_EXT, GCS_FILE_PATH, GCS_DIR_PATH
+from shared.misc.utilities import http_return
 
 
-def load(data_cat, bucket_nm, bucket_dir_path, dataset_nm, batch_dt, start_dt, end_dt, logger, **kwargs):
+def load_handler(data_cat, bucket_nm, bucket_dir_path, dataset_nm, batch_dt, start_dt, end_dt, logger, **kwargs):
     # For the load step, we will read the transformed data from GCS and load it into a BigQuery table. We will use the BigQuery client library to perform the load operation. We will also create the target table if it does not exist and we will use a staging table to perform the merge operation to ensure that we do not have duplicate records in the target table. We will partition the target table by market_dt and cluster by symbol and market_dt for optimized query performance.
     try:
         bq_client = bq.Client()

@@ -1,4 +1,7 @@
-from src.transform.transformer import transform_handler
+from src.transformer import transform_handler as run_transform
+
+from shared.clients.gcp_logging import GCPLogger
+from shared.misc.utilities import http_return
 
 def transform(request):
     # Parse JSON body
@@ -34,5 +37,5 @@ def transform_dividends(request):
     optional_kwargs = request.get("options", {})
     
     # Call the pure transformer logic
-    json_status_res = transform_handler(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
+    json_status_res = run_transform(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
     return json_status_res

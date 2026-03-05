@@ -5,7 +5,7 @@ from src.extractor import extract_handler as run_extract
 
 from shared.clients.gcp_logging import GCPLogger
 from shared.clients.gcp_services import get_secret as gcp_get_secret
-from shared.utilities import getCurWkDtRange, http_return
+from shared.misc.utilities import getCurWkDtRange, http_return
 from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
 

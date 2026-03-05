@@ -1,8 +1,8 @@
 from pyspark.sql.functions import col, explode
 from google.cloud import exceptions as gcp_exceptions
 
-from src.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
-from src.utilities import http_return
+from shared.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
+from shared.misc.utilities import http_return
 
 def transform_handler(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_nm, tfd_bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
         tfd_file_type = kwargs.get("tfd_file_type", "parquet")

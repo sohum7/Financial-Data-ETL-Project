@@ -1,4 +1,6 @@
-from src.load.loader import load as load_main
+from src.loader import load_handler as run_load
+
+from shared.misc.utilities import http_return
 
 def load(request):
     # Parse JSON body
@@ -31,6 +33,6 @@ def load_dividends(request):
     optional_kwargs = request.get("options", {})
     
     # Call the pure load logic
-    json_status_res = load_main(data_cat, bucket_nm, bucket_dir_nm, dataset_nm, batch_dt, start_dt, end_dt, **optional_kwargs)
+    json_status_res = run_load(data_cat, bucket_nm, bucket_dir_nm, dataset_nm, batch_dt, start_dt, end_dt, **optional_kwargs)
     return json_status_res
 

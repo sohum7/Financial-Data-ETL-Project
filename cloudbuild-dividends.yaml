@@ -17,23 +17,22 @@ steps:
         echo "ENVIRONMENT=$$ENVIRONMENT"
         echo "==============================="
 
-        rm  -rf  ms_div_extract_cf_package
-        mkdir  -p  ms_div_extract_cf_package
+        # Prepare the Cloud Function source code directory
+        rm  -rf  ms_div_extract_cf
+        mkdir  -p  ms_div_extract_cf
 
         # Copy Cloud Function entrypoint
-        cp  dividends/extract/jobs/main.py  ms_div_extract_cf_package/
+        cp  dividends/extract/jobs/main.py  ms_div_extract_cf/
 
         # Copy requirements file
-        cp  dividends/extract/jobs/requirements.txt  ms_div_extract_cf_package/
+        cp  dividends/extract/jobs/requirements.txt  ms_div_extract_cf/
 
         # Copy extraction logic
-        mkdir -p ms_div_extract_cf_package/src
-        cp  -r  dividends/extract/src/* ms_div_extract_cf_package/src/
+        mkdir -p ms_div_extract_cf/src
+        cp  -r  dividends/extract/src/* ms_div_extract_cf/src/
         
         # Copy shared files
-        cp  -r  dividends/shared  ms_div_extract_cf_package/
-
-
+        cp  -r  dividends/shared  ms_div_extract_cf/
 
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
@@ -42,7 +41,7 @@ steps:
           --project=$$GOOGLE_CLOUD_PROJECT \
           --service-account=market-stack-func-gcs-uploader@$$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
-          --source=dividends \
+          --source=ms_div_extract_cf \
           --allow-unauthenticated \
           --trigger-http \
           --min-instances=0 \
