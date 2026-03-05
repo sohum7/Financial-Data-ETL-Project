@@ -1,8 +1,8 @@
 from json import dumps as json_dumps
 from json import loads as json_loads
 
-from src.extract.extractor import extract_generic as extract_generic_main
-from src.transform.transformer import transform_handler as transform_generic_main
+from src.extract.extractor import extract_handler
+from src.transform.transformer import transform_handler
 from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
 from src.clients.gcp_services import get_secret as gcp_get_secret
@@ -48,13 +48,13 @@ def extract(request):
 
 def extract_dividends(_request):
     '''DELETE THIS ONCE TESTING IS DONE. THIS IS JUST FOR TESTING PURPOSES TO AVOID HAVING TO SEND A JSON BODY IN THE REQUEST EVERY TIME.'''
-    '''TEST START'''
+    '''TEST START - change yaml entry point?'''
     # _request is not being used in this function for now. we will parse the required parameters from the request once testing is done. for now, we are hardcoding the parameters for testing purposes to avoid having to send a JSON body in the request every time we want to test the function. we will change this back to parsing from the request JSON once testing is done.
     MS_V2_API_KEY = gcp_get_secret("MARKET_STACK_V2_API_KEY")
     # for testing (this will be within airflow later)
     todays_dt, past_monday_dt, past_friday_dt = getCurWkDtRange()
     request = { "data_category": MS_CAT, \
-                "base_url": MS_DIV_URL, \
+                "full_url": MS_DIV_URL, \
                 "symbols": MS_SYMBOLS, \
                 "api_key": MS_V2_API_KEY, \
                 "bucket_name": MS_DIV_RAW_FILE_BUCKET_NM, \
@@ -66,7 +66,7 @@ def extract_dividends(_request):
     
     # Required parameters
     data_cat = request.get("data_category")
-    base_url = request.get("base_url")
+    full_url = request.get("full_url")
     symbols_lst = request.get("symbols")
     api_key = request.get("api_key")
     bucket_nm = request.get("bucket_name")
@@ -76,7 +76,7 @@ def extract_dividends(_request):
     end_dt = request.get("end_date")
 
     # Validate required fields
-    missing = [p for p in ["data_category", "base_url", "symbols", "api_key", "bucket_name", "bucket_directory_name", "batch_date", "start_date", "end_date"] if not request.get(p)]
+    missing = [p for p in ["data_category", "full_url", "symbols", "api_key", "bucket_name", "bucket_directory_name", "batch_date", "start_date", "end_date"] if not request.get(p)]
     if missing:
         return http_return(400, f"Missing required fields: {missing}")
 
@@ -85,7 +85,7 @@ def extract_dividends(_request):
     
     with GCPLogger() as gcp_logger:
         # Call the pure extractor logic
-        json_status_res = extract_generic_main(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
+        json_status_res = extract_handler(data_cat, full_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
     return json_status_res
 
 def transform(request):
@@ -122,7 +122,7 @@ def transform_dividends(request):
     optional_kwargs = request.get("options", {})
     
     # Call the pure transformer logic
-    json_status_res = transform_generic_main(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
+    json_status_res = transform_handler(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
     return json_status_res
 
 

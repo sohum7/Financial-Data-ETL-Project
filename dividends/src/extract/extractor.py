@@ -6,7 +6,7 @@ from json import JSONDecodeError
 from src.clients.gcp_services import write_json_to_gcs
 from src.utilities import http_return
 
-def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
+def extract_handler(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
     max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst))  # Default to 5 rows per symbol if not provided
     req_limit = kwargs.get("limit", max_req_rows)
     sort_type = kwargs.get("sort", "ASC")
@@ -24,7 +24,7 @@ def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
     # company symbols from which to extract data from
     symbols_params_str = ",".join(symbols_lst)
     
-    # API request to Marketstack
+    # API request parameters for Marketstack
     req_params = {
         "access_key": api_key,
         "symbols": symbols_params_str,
@@ -34,20 +34,15 @@ def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
         "sort": sort_type
     }
     
-    # construct the full URL for the API request
+    # Construct the full API URL for the given data category
     full_url = f"{base_url}/{data_cat}"
     
     try:
-        # make the API request
-        res = req.get(full_url, params=req_params)
-        res.raise_for_status()  # Raise an error for HTTP errors
-        
-        # Parse the JSON response
-        res_json = res.json()
+        # Make the API request and get the JSON response
+        res_json = extract_generic_main(full_url, req_params)
         
         # Write the JSON data to GCS
         file_path = write_json_to_gcs(data_cat, res_json, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt)
-    
     # Exception Handling
     except HTTPError as e:
         msg = f"HTTP error occurred: {e}"
@@ -70,3 +65,13 @@ def extract_generic(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
     msg = f"Data extracted and written to GCS: {file_path}"
     logger.error(msg)
     return http_return(200, msg)
+    
+def extract_generic_main(full_url, req_params):
+    # make the API request
+    res = req.get(full_url, params=req_params)
+    res.raise_for_status()  # Raise an error for HTTP errors
+    
+    # Parse the JSON response
+    res_json = res.json()
+    
+    return res_json

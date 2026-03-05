@@ -42,7 +42,7 @@ MS_SYMBOLS = ms_cfg["symbols"]
 MS_BASE_URL = ms_cfg["base_url"]
 
 MS_CAT = ms_div_cfg["name"]
-MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}"
+MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}/"
 
 ## Extract source data
 MS_DIV_RAW_FILE_TYPE = ms_div_cfg["raw_file_type"]

@@ -1,5 +1,5 @@
 from pyspark.sql.functions import col, explode
-from google.cloud.storage.exceptions import NotFound, Forbidden
+from google.cloud import exceptions as gcp_exceptions
 
 from src.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
 from src.utilities import http_return
@@ -13,7 +13,7 @@ def transform_handler(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_n
                 
                 # Main transformation logic
                 if data_cat == "dividends":
-                        df = transform_dividends(df)
+                        df = transform_dividends_main(df)
                 else:
                         msg = f"Unsupported data category: {data_cat}"
                         logger.error(msg)
@@ -22,11 +22,11 @@ def transform_handler(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_n
                 # Write the transformed data back to GCS in delta lake format (parquet), partitioned by market_dt and clustered by symbol
                 file_path = write_dividends_df_to_gcs(df, data_cat, tfd_bucket_nm, tfd_bucket_dir_path, "market_dt", ["symbol", "market_dt"], tfd_file_type, tfd_save_mode, batch_dt, start_dt, end_dt)
 
-        except NotFound:
+        except gcp_exceptions.NotFound:
                 msg = f"Raw JSON file not found in GCS at path: {raw_bucket_nm}/{raw_bucket_dir_path} for batch date: {batch_dt}"
                 logger.error(msg)
                 return http_return(404, msg)
-        except Forbidden:
+        except gcp_exceptions.Forbidden:
                 msg = f"Access denied when trying to read/write raw JSON file from GCS at path: {raw_bucket_nm}/{raw_bucket_dir_path} for batch date: {batch_dt}. Please check permissions."
                 logger.error(msg)
                 return http_return(403, msg)
@@ -39,7 +39,7 @@ def transform_handler(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_n
         logger.info(msg)
         return http_return(200, msg)
 
-def transform_dividends(df):
+def transform_dividends_main(df):
         # Flatten the nested JSON structure and select the relevant fields
         df = df.select(explode(col("data")).alias("record")).select("record.*")
         
