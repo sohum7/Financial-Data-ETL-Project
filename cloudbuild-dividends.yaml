@@ -43,8 +43,7 @@ steps:
       - -c
       - |
         echo "**** Copying transfer.py to GCS bucket... ****"
-        if gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py \
-          --set-env-vars ENVIRONMENT=$ENVIRONMENT,BUCKET_SUFFIX=$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT;
+        if gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py; \
         then
           echo "File copied successfully."
         else
