@@ -52,11 +52,6 @@ steps:
           exit 1
         fi
 
-# This block stays EMPTY of values, but defines the KEYS so the YAML validates
-substitutions:
-  _PROJECT: ''
-  _ENV: ''
-  _BUCKET_SUFFIX: ''
-
 options:
   logging: CLOUD_LOGGING_ONLY
+  substitution_option: 'ALLOW_LOOSE'
