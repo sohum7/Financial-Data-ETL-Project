@@ -11,7 +11,7 @@ from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV
 import os
 BASE_DIR = os.path.dirname(__file__)
 with GCPLogger() as gcp_logger:
-    gcp_logger.info(f"Current working directory: {BASE_DIR}")
+    gcp_logger.error(f"Current working directory: {BASE_DIR}")
 
 # for references
 # bucket - market-stack-....-dev
