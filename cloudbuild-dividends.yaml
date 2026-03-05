@@ -3,27 +3,22 @@ steps:
     id: 'Deploy Cloud Function'
     entrypoint: bash
     env:
-      - GOOGLE_CLOUD_PROJECT=$_PROJECT
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - ENVIRONMENT=$_ENV
       - BUCKET_SUFFIX=$_BUCKET_SUFFIX
     args:
       - -c
       - |
         # DEBUG: print substitutions at runtime
-        echo "==== Debug Build Variables ===="
-        echo "_PROJECT=$_PROJECT"
-        echo "GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT"
-        echo "ENVIRONMENT=$ENVIRONMENT"
-        echo "BUCKET_SUFFIX=$BUCKET_SUFFIX"
         echo "==============================="
-        
+
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
           --runtime=python310 \
           --region=us-central1 \
-          --project=$_PROJECT \
+          --project=$PROJECT_ID \
           --service-account=market-stack-func-gcs-uploader@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
           --source=dividends \
@@ -32,7 +27,7 @@ steps:
           --min-instances=0 \
           --max-instances=1 \
           --timeout=480s \
-          --set-env-vars ENVIRONMENT=$ENVIRONMENT,BUCKET_SUFFIX=$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
+          --set-env-vars ENVIRONMENT=$_ENV,BUCKET_SUFFIX=$_BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$PROJECT_ID
 
         if [ $? -eq 0 ]; then
           echo "✅ Cloud Function deployed successfully."
