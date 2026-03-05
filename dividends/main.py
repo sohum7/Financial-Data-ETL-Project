@@ -7,7 +7,7 @@ from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
 from src.clients.gcp_services import get_secret as gcp_get_secret
 from src.utilities import getCurWkDtRange, http_return
-from configs.config import MS_CAT, MS_DIV_URL, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
+from configs.config import MS_BASE_URL, MS_CAT, MS_DIV_URL, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
 
 
@@ -54,7 +54,7 @@ def extract_dividends(_request):
     # for testing (this will be within airflow later)
     todays_dt, past_monday_dt, past_friday_dt = getCurWkDtRange()
     request = { "data_category": MS_CAT, \
-                "full_url": MS_DIV_URL, \
+                "base_url": MS_BASE_URL, \
                 "symbols": MS_SYMBOLS, \
                 "api_key": MS_V2_API_KEY, \
                 "bucket_name": MS_DIV_RAW_FILE_BUCKET_NM, \
@@ -66,7 +66,7 @@ def extract_dividends(_request):
     
     # Required parameters
     data_cat = request.get("data_category")
-    full_url = request.get("full_url")
+    base_url = request.get("base_url")
     symbols_lst = request.get("symbols")
     api_key = request.get("api_key")
     bucket_nm = request.get("bucket_name")
@@ -76,7 +76,7 @@ def extract_dividends(_request):
     end_dt = request.get("end_date")
 
     # Validate required fields
-    missing = [p for p in ["data_category", "full_url", "symbols", "api_key", "bucket_name", "bucket_directory_name", "batch_date", "start_date", "end_date"] if not request.get(p)]
+    missing = [p for p in ["data_category", "base_url", "symbols", "api_key", "bucket_name", "bucket_directory_name", "batch_date", "start_date", "end_date"] if not request.get(p)]
     if missing:
         return http_return(400, f"Missing required fields: {missing}")
 
@@ -85,7 +85,7 @@ def extract_dividends(_request):
     
     with GCPLogger() as gcp_logger:
         # Call the pure extractor logic
-        json_status_res = extract_handler(data_cat, full_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
+        json_status_res = extract_handler(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
     return json_status_res
 
 def transform(request):

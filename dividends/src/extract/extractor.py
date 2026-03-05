@@ -35,7 +35,7 @@ def extract_handler(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_
     }
     
     # Construct the full API URL for the given data category
-    full_url = f"{base_url}/{data_cat}"
+    full_url = f"{base_url}{data_cat}"
     
     try:
         # Make the API request and get the JSON response
