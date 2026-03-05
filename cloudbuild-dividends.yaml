@@ -14,6 +14,7 @@ steps:
           --gen2 \
           --runtime=python310 \
           --region=us-central1 \
+          --project=$GOOGLE_CLOUD_PROJECT \
           --service-account=market-stack-func-gcs-uploader@project-e6aecb7b-2aa0-4815-8c3.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
           --source=dividends \
@@ -37,7 +38,8 @@ steps:
       - -c
       - |
         echo "**** Copying transfer.py to GCS bucket... ****"
-        if gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py;
+        if gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py \
+          --set-env-vars ENVIRONMENT=$ENVIRONMENT,BUCKET_SUFFIX=$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT;
         then
           echo "File copied successfully."
         else
