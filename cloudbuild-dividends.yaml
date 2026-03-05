@@ -3,7 +3,7 @@ steps:
     id: 'Deploy Cloud Function'
     entrypoint: bash
     env:
-      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - GOOGLE_CLOUD_PROJECT=$_PROJECT
       - ENVIRONMENT=$_ENV
       - BUCKET_SUFFIX=$_BUCKET_SUFFIX
     args:
@@ -23,7 +23,7 @@ steps:
           --gen2 \
           --runtime=python310 \
           --region=us-central1 \
-          --project=${GOOGLE_CLOUD_PROJECT} \
+          --project=$_PROJECT \
           --service-account=market-stack-func-gcs-uploader@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
           --source=dividends \
