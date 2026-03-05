@@ -3,9 +3,8 @@ steps:
     id: 'Deploy Cloud Function'
     entrypoint: bash
     env:
-      - GOOGLE_CLOUD_PROJECT=$_PROJECT
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - ENVIRONMENT=$_ENV
-      - BUCKET_SUFFIX=$_BUCKET_SUFFIX
     args:
       - -c
       - |
@@ -14,7 +13,6 @@ steps:
         echo "==== Debug Build Variables ===="
         echo "GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT"
         echo "ENVIRONMENT=$$ENVIRONMENT"
-        echo "BUCKET_SUFFIX=$$BUCKET_SUFFIX"
 
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
@@ -31,7 +29,7 @@ steps:
           --min-instances=0 \
           --max-instances=1 \
           --timeout=480s \
-          --set-env-vars ENVIRONMENT=$$ENVIRONMENT,BUCKET_SUFFIX=$$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT
+          --set-env-vars ENVIRONMENT=$$ENVIRONMENT,GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT
 
         if [ $? -eq 0 ]; then
           echo "✅ Cloud Function deployed successfully."

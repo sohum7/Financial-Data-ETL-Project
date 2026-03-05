@@ -1,18 +1,45 @@
 from pyspark.sql.functions import col, explode
+from google.cloud.storage.exceptions import NotFound, Forbidden
+
 from src.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
 from src.utilities import http_return
 
-def transform_dividends(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_nm, tfd_bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
+def transform_handler(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket_nm, tfd_bucket_dir_path, batch_dt, start_dt, end_dt, logger, **kwargs):
         tfd_file_type = kwargs.get("tfd_file_type", "parquet")
         tfd_save_mode = kwargs.get("save_mode", "append")
         
         try:
                 df = read_json_from_gcs(data_cat, raw_bucket_nm, raw_bucket_dir_path, batch_dt, with_spark=True, **kwargs) # read_json_from_gcs_with_spark(spark, raw_bucket_nm, raw_dir_nm, batch_dt)
+                
+                # Main transformation logic
+                if data_cat == "dividends":
+                        df = transform_dividends(df)
+                else:
+                        msg = f"Unsupported data category: {data_cat}"
+                        logger.error(msg)
+                        return http_return(400, msg)
+                
+                # Write the transformed data back to GCS in delta lake format (parquet), partitioned by market_dt and clustered by symbol
+                file_path = write_dividends_df_to_gcs(df, data_cat, tfd_bucket_nm, tfd_bucket_dir_path, "market_dt", ["symbol", "market_dt"], tfd_file_type, tfd_save_mode, batch_dt, start_dt, end_dt)
+
+        except NotFound:
+                msg = f"Raw JSON file not found in GCS at path: {raw_bucket_nm}/{raw_bucket_dir_path} for batch date: {batch_dt}"
+                logger.error(msg)
+                return http_return(404, msg)
+        except Forbidden:
+                msg = f"Access denied when trying to read/write raw JSON file from GCS at path: {raw_bucket_nm}/{raw_bucket_dir_path} for batch date: {batch_dt}. Please check permissions."
+                logger.error(msg)
+                return http_return(403, msg)
         except Exception as e:
                 msg = f"Error reading raw JSON data from GCS: {e}"
                 logger.error(msg)
                 return http_return(500, msg)
-        
+                
+        msg = f"Data transformed and written to GCS at path: {file_path}"
+        logger.info(msg)
+        return http_return(200, msg)
+
+def transform_dividends(df):
         # Flatten the nested JSON structure and select the relevant fields
         df = df.select(explode(col("data")).alias("record")).select("record.*")
         
@@ -56,15 +83,4 @@ def transform_dividends(data_cat, raw_bucket_nm, raw_bucket_dir_path, tfd_bucket
                 col("declar_dt")
         )
         
-        # Write the transformed data back to GCS in delta lake format (parquet), partitioned by market_dt and clustered by symbol
-        try:
-                file_path = write_dividends_df_to_gcs(df, data_cat, tfd_bucket_nm, tfd_bucket_dir_path, "market_dt", ["symbol", "market_dt"], tfd_file_type, tfd_save_mode, batch_dt, start_dt, end_dt)
-        except Exception as e:
-                msg = f"Error writing transformed data to GCS: {e}"
-                logger.error(msg)
-                return http_return(500, msg)
-        
-        msg = f"Data transformed and written to GCS at path: {file_path}"
-        logger.info(msg)
-        return http_return(200, msg)
-
+        return df

@@ -2,7 +2,7 @@ from json import dumps as json_dumps
 from json import loads as json_loads
 
 from src.extract.extractor import extract_generic as extract_generic_main
-from src.transform.transformer import transform_dividends as transform_dividends_main
+from src.transform.transformer import transform_handler as transform_generic_main
 from src.load.loader import load as load_main
 from src.clients.gcp_logging import GCPLogger
 from src.clients.gcp_services import get_secret as gcp_get_secret
@@ -47,8 +47,7 @@ def extract(request):
         return http_return(400, f"Unsupported data category: {data_cat}")
 
 def extract_dividends(_request):
-    
-    
+    '''DELETE THIS ONCE TESTING IS DONE. THIS IS JUST FOR TESTING PURPOSES TO AVOID HAVING TO SEND A JSON BODY IN THE REQUEST EVERY TIME.'''
     '''TEST START'''
     # _request is not being used in this function for now. we will parse the required parameters from the request once testing is done. for now, we are hardcoding the parameters for testing purposes to avoid having to send a JSON body in the request every time we want to test the function. we will change this back to parsing from the request JSON once testing is done.
     MS_V2_API_KEY = gcp_get_secret("MARKET_STACK_V2_API_KEY")
@@ -123,7 +122,7 @@ def transform_dividends(request):
     optional_kwargs = request.get("options", {})
     
     # Call the pure transformer logic
-    json_status_res = transform_dividends_main(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
+    json_status_res = transform_generic_main(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
     return json_status_res
 
 
