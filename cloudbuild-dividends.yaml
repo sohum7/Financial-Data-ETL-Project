@@ -17,6 +17,7 @@ steps:
           --service-account=market-stack-func-gcs-uploader@project-e6aecb7b-2aa0-4815-8c3.iam.gserviceaccount.com \
           --entry-point=extract_dividends \
           --source=dividends \
+          --set-env-vars ENVIRONMENT=$ENVIRONMENT,BUCKET_SUFFIX=$BUCKET_SUFFIX,GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT \
           --allow-unauthenticated \
           --trigger-http \
           --min-instances=0 \
