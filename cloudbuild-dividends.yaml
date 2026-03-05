@@ -16,7 +16,7 @@ steps:
         echo "ENVIRONMENT=$ENVIRONMENT"
         echo "BUCKET_SUFFIX=$BUCKET_SUFFIX"
         echo "==============================="
-
+        
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
         gcloud functions deploy market-stack-dividends-extract \
