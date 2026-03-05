@@ -3,9 +3,9 @@ steps:
     id: 'Deploy Cloud Function'
     entrypoint: bash
     env:
-      - 'ENVIRONMENT=$_ENV'
-      - 'BUCKET_SUFFIX=$_BUCKET_SUFFIX'
-      - 'GOOGLE_CLOUD_PROJECT=$_PROJECT'
+      - ENVIRONMENT=$_ENV
+      - BUCKET_SUFFIX=$_BUCKET_SUFFIX
+      - GOOGLE_CLOUD_PROJECT=$_PROJECT
     args:
       - -c
       - |
