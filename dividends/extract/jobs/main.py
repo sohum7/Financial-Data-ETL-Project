@@ -1,35 +1,24 @@
+# Builtin imports
 from json import dumps as json_dumps
 from json import loads as json_loads
 
+# Third-party imports
 from shared.clients.gcp_logging import GCPLogger
 from shared.clients.gcp_services import get_secret as gcp_get_secret
 from shared.misc.utilities import getCurWkDtRange, http_return
 from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
+# Local imports (added to path for cleaner imports)
 from os import path as os_path
 from sys import path as sys_path
 
-from src.extractor import extract_handler as run_extract
+current_dir = os_path.dirname(os_path.abspath(__file__))
+sys_path.insert(0, os_path.join(current_dir, "src"))
+sys_path.insert(0, os_path.join(current_dir, "shared"))
 
-# for references
-# bucket - market-stack-....-dev
-# dir    - bronze/dividends/
-# file   - DIVIDENDS_20240101_20240107.json
-# blob   - {dir}{file} - bronze/dividends/DIVIDENDS_20240101_20240107.json
-# extract
-# input - start_dt, end_dt, data_cat, symbols, api_key, url, bucket_nm, bucket_dir
-# output - file path in gcs bucket where extracted data is stored
-# isnt base url the same?
-# 1 weeks worth of data for all symbols goes into 1 file in gcs bucket. file name is based on data category and date range of data.
-# extracting for dividends is similar to tickers, etc, but transforming is different based on the structure of data returned by marketstack api. so we can have a generic extract function but separate transform functions for each data category. or we can have separate extract and transform functions for each data category. we will go with the former approach to avoid code duplication in extract functions and have more modular code.
-
-# transform
-# input - start_dt, end_dt, data_cat, symbols, raw_bucket_nm, raw_bucket_dir_nm, tfd_bucket_nm, tfd_bucket_dir_nm
-# output - multiple files in gcs bucket where transformed data is stored. file format is delta lake. file name is based on data category and date range of data.
+from extractor import extract_handler as run_extract
 
 
-# TODO:
-# HANDLE EXCEPTIONS IN THE LOGIC FUNCTIONS
 
 def extract(request):
     # Parse JSON body
