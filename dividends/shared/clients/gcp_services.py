@@ -4,18 +4,7 @@ from pyspark.sql import SparkSession
 from os import environ as os_environ
 from google.cloud import storage as gc_storage
 from google.cloud import secretmanager as gc_secretmanager
-
-
-#FILE_NM_DT_FORMAT = "%Y%m%d"
-# raw file format in gcs bucket for extracted data. This is used to construct the file name for the raw data stored in GCS. The file name is based on the data category, start date, end date, and file type (e.g., json).
-# Example: {file_status_type}_dividends_20240101_20240107_20240107
-MS_FILE_NM = lambda DATA_CAT, START_DT, END_DT: f"{DATA_CAT.lower()}_{START_DT}_{END_DT}"
-MS_FILE_NM_W_EXT = lambda DATA_CAT, START_DT, END_DT, FILE_TYPE: f"{MS_FILE_NM(DATA_CAT, START_DT, END_DT)}.{FILE_TYPE.lower()}"
-
-GCS_PREFIX = "gs://"
-GCS_BUCKET_PATH = lambda BUCKET_NM: f"{GCS_PREFIX}{BUCKET_NM}"
-GCS_BLOB_PATH_PREFIX = lambda BATCH_DT, DIR_NM: f"{DIR_NM}/batch_date={BATCH_DT}"
-GCS_BLOB_PATH = lambda BATCH_DT, DIR_NM, FILE_NM: f"{GCS_BLOB_PATH_PREFIX(BATCH_DT, DIR_NM)}/{MS_FILE_NM_W_EXT(FILE_NM, '', '', 'json')}"
+from gcs_naming import MS_FILE_NM_W_EXT, GCS_BLOB_PATH, GCS_BLOB_PATH_PREFIX, GCS_BUCKET_PATH
 
 def get_secret(secret_name):
     project_id = os_environ.get("GOOGLE_CLOUD_PROJECT")

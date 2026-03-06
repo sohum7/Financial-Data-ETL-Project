@@ -39,6 +39,8 @@ steps:
         mkdir  -p  ms_div_extract_cf/shared
         cp  -r  dividends/shared/.  ms_div_extract_cf/shared/
 
+        # Deploy the Cloud Function using gcloud CLI
+        echo "**** Deploying Cloud Function ****"
         gcloud functions deploy market-stack-dividends-extract \
           --gen2 \
           --runtime=python310 \
@@ -74,8 +76,8 @@ steps:
         # exit immediately if a command exits with a non-zero status, and prevents partial deployment
         set -e
 
-        echo "**** Copying transfer.py to GCS bucket... ****"
-        #### NEED TO CHANGE TRANSFORM MAIN FILE SO THAT ITS SEPARATE FROM EXTRACT MAIN FILE, THEN UPDATE THIS STEP TO COPY TRANSFORM MAIN FILE INSTEAD OF EXTRACT MAIN FILE
+        # Copy transformation logic to GCS bucket
+        echo "**** Copying transformation files to GCS bucket... ****"
         gcloud storage cp -r dividends/transform/ gs://market-stack-code-dev/dataproc/dividends/transform/;
         if [ $? -eq 0 ]; then
           echo "✅ File copied successfully."
@@ -88,5 +90,5 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
   substitutionOption: 'ALLOW_LOOSE'
-  machineType: 'E2_HIGHCPU_8' # Example: Increases vCPUs to 8
+  machineType: 'E2_HIGHCPU_8'
 
