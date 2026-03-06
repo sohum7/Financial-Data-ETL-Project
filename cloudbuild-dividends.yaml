@@ -78,7 +78,7 @@ steps:
 
         # Copy transformation logic to GCS bucket
         echo "**** Copying transformation files to GCS bucket... ****"
-        gcloud storage cp -r dividends/transform/ gs://market-stack-code-dev/dataproc/dividends/transform/;
+        gcloud storage cp -r dividends/transform/. gs://market-stack-code-dev/dataproc/dividends/transform/;
         if [ $? -eq 0 ]; then
           echo "✅ File copied successfully."
         else
