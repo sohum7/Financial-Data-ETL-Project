@@ -84,5 +84,5 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
   substitution_option: 'ALLOW_LOOSE'
-  machineType: 'E2_HIGHCPU_4' # Example: Increases vCPUs to 8
+  #machineType: 'E2_HIGHCPU_4' # Example: Increases vCPUs to 8
 
