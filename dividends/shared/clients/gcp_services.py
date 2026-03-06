@@ -15,7 +15,7 @@ MS_FILE_NM_W_EXT = lambda DATA_CAT, START_DT, END_DT, FILE_TYPE: f"{MS_FILE_NM(D
 GCS_PREFIX = "gs://"
 GCS_BUCKET_PATH = lambda BUCKET_NM: f"{GCS_PREFIX}{BUCKET_NM}"
 GCS_BLOB_PATH_PREFIX = lambda BATCH_DT, DIR_NM: f"{DIR_NM}/batch_date={BATCH_DT}"
-GCS_BLOB_PATH = lambda BATCH_DT, DIR_NM, FILE_NM: f"{GCS_BLOB_PATH_PREFIX(BATCH_DT, DIR_NM)}/{MS_FILE_NM_W_EXT(FILE_NM, BATCH_DT, '', '', 'json')}"
+GCS_BLOB_PATH = lambda BATCH_DT, DIR_NM, FILE_NM: f"{GCS_BLOB_PATH_PREFIX(BATCH_DT, DIR_NM)}/{MS_FILE_NM_W_EXT(FILE_NM, '', '', 'json')}"
 
 def get_secret(secret_name):
     project_id = os_environ.get("GOOGLE_CLOUD_PROJECT")
