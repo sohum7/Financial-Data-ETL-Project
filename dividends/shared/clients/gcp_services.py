@@ -15,7 +15,7 @@ def get_secret(secret_name):
 
 def write_json_to_gcs(data_cat, data, bucket_nm, dir_nm, batch_dt, start_dt, end_dt) -> None:
     file_type = "json"
-    file_nm = MS_FILE_NM_W_EXT(data_cat, start_dt, end_dt, file_type)
+    file_nm = MS_FILE_NM(data_cat, start_dt, end_dt)
     blob_nm = GCS_BLOB_PATH(batch_dt, dir_nm, file_nm)
     
     storage_client = gc_storage.Client()
