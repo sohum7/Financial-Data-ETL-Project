@@ -1,6 +1,8 @@
-from pyspark.sql.functions import col, explode
-from google.cloud import exceptions as gcp_exceptions
+# Main transform logic for various data categories to GCS
 
+# Shared imports
+from google.cloud import exceptions as gcp_exceptions
+from pyspark.sql.functions import col, explode
 from shared.clients.gcp_services import read_json_from_gcs, write_dividends_df_to_gcs
 from shared.misc.utilities import http_return
 

@@ -1,6 +1,8 @@
-from google.cloud import bigquery as gc_bigquery
+# Main load logic for various data categories to BigQuery
 
-from shared.clients.gcp_services import MS_FILE_NM_WO_EXT, GCS_FILE_PATH, GCS_DIR_PATH
+# Shared imports
+from google.cloud import bigquery as gc_bigquery
+from shared.clients.gcs_naming import MS_FILE_NM, GCS_FILE_PATH, GCS_DIR_PATH
 from shared.misc.utilities import http_return
 
 

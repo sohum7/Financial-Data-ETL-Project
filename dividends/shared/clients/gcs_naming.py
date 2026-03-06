@@ -1,3 +1,4 @@
+# GCS naming conventions for files and paths used in the project
 
 # GCS file naming convention
 MS_FILE_NM = lambda DATA_CAT, START_DT, END_DT: \

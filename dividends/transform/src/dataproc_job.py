@@ -1,7 +1,12 @@
-from src.transformer import transform_handler as run_transform
+# Dataproc transform job for various data categories
 
+# Shared Imports
 from shared.clients.gcp_logging import GCPLogger
 from shared.misc.utilities import http_return
+
+# Local Imports
+from transform.src.transformer import transform_handler as run_transform
+
 
 def transform(request):
     # Parse JSON body
@@ -37,5 +42,8 @@ def transform_dividends(request):
     optional_kwargs = request.get("options", {})
     
     # Call the pure transformer logic
-    json_status_res = run_transform(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
+    with GCPLogger() as logger:
+        logger.info(f"Starting transformation for data category: {data_cat}")
+        json_status_res = run_transform(data_cat, raw_bucket_nm, raw_dir_nm, tfd_bucket_nm, tfd_dir_nm, batch_dt, start_dt, end_dt, tfd_file_type=tfd_file_type, tfd_save_mode=tfd_save_mode, **optional_kwargs)
+    
     return json_status_res

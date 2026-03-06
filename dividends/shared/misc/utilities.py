@@ -1,4 +1,8 @@
+# Utility functions for the dividends ETL pipeline, including date range calculations and standardized HTTP response formatting.
+
+# Builtin imports
 from datetime import datetime, timedelta
+
 
 def getCurWkDtRange():
     # today

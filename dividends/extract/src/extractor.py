@@ -1,11 +1,16 @@
-from requests import get as requests_get
-from requests.exceptions import HTTPError, RequestException
+# Main extractor logic for various data categories
+
+# Builtin Imports
 from datetime import datetime
 from json import JSONDecodeError
+from requests import get as requests_get
+from requests.exceptions import HTTPError, RequestException
 
+# Shared Imports
 from shared.clients.gcp_logging import GCPLogger
 from shared.clients.gcp_services import write_json_to_gcs
 from shared.misc.utilities import http_return
+
 
 def extract_handler(data_cat: str, base_url: str, symbols_lst: list, api_key: str, bucket_nm: str, bucket_dir_path: str, batch_dt: datetime | str, start_dt: datetime | str, end_dt: datetime | str, logger: GCPLogger, **kwargs):
     max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst))  # Default to 5 rows per symbol if not provided

@@ -1,6 +1,10 @@
-from src.loader import load_handler as run_load
+# BigQuery load job for various data categories
 
+# Shared imports
 from shared.misc.utilities import http_return
+
+# Local imports
+from load.src.loader import load_handler as run_load
 
 def load(request):
     # Parse JSON body

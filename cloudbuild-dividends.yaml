@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy-dividends-extract-function'
+    id: 'deploy-dividends-extract-function-job'
     entrypoint: bash
     env:
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
@@ -25,15 +25,9 @@ steps:
         rm  -rf  ms_div_extract_cf
         mkdir  -p  ms_div_extract_cf
 
-        # Copy Cloud Function entrypoint
-        cp  dividends/extract/jobs/main.py  ms_div_extract_cf/
-
-        # Copy requirements file
-        cp  dividends/extract/jobs/requirements.txt  ms_div_extract_cf/
-
-        # Copy extraction logic
-        mkdir  -p  ms_div_extract_cf/src
-        cp  -r dividends/extract/src/.  ms_div_extract_cf/src/
+        # Copy Cloud Function entrypoint + requirements + extraction logic
+        mkdir  -p  ms_div_extract_cf/extract
+        cp -r dividends/extract/.  ms_div_extract_cf/extract/
         
         # Copy shared files
         mkdir  -p  ms_div_extract_cf/shared
@@ -65,27 +59,26 @@ steps:
     waitFor: ['-']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'copy-transformer-to-gcs'
+    id: 'submit-dividends-transform-dataproc-job'
     entrypoint: bash
+    env:
+      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - ENVIRONMENT=$_ENV
     args:
       - -c
       - |
-        # Transfer dividends transform files to GCS bucket for Dataproc job to access
-        echo "**** Building dividends transformation process ****"
+        # Submit Dataproc job for dividends transformation
+        echo "**** Submitting Dataproc job for dividends transformation ****"
 
         # exit immediately if a command exits with a non-zero status, and prevents partial deployment
         set -e
-
-        # Copy transformation logic to GCS bucket
-        echo "**** Copying transformation files to GCS bucket... ****"
-        gcloud storage cp -r dividends/transform/. gs://market-stack-code-dev/dataproc/dividends/;
-        if [ $? -eq 0 ]; then
-          echo "✅ File copied successfully."
-        else
-          echo "❌ Failed to copy file."
-          exit 1
-        fi
-    waitFor: ['-']
+        # Submit the Dataproc job using gcloud CLI
+        gcloud dataproc jobs submit pyspark gs://market-stack-code-dev/dataproc/dividends/transform_job.py \
+          --cluster=market-stack-dataproc-dev \
+          --region=us-central1 \
+          --project=$$GOOGLE_CLOUD_PROJECT \
+          --py-files=
+          
 
 options:
   logging: CLOUD_LOGGING_ONLY

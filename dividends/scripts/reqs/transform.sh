@@ -1,9 +1,9 @@
 # Go to the extract directory and generate requirements.txt using pipreqs
 cd dividends
-req_path="extract"
+req_path="transform"
 touch $req_path/temp_requirements.txt
 
-pipreqs --force extract --print >> $req_path/temp_requirements.txt
+pipreqs --force transform --print >> $req_path/temp_requirements.txt
 pipreqs --force shared --print >> $req_path/temp_requirements.txt
 
 # Remove any existing protobuf and shared dependencies from requirements.txt

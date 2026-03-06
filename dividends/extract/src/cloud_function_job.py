@@ -1,24 +1,22 @@
-# Builtin imports
-from json import dumps as json_dumps
-from json import loads as json_loads
+# Cloud Function extraction job for various data categories to GCS
 
-# Third-party imports
+# Builtin imports
+#from json import dumps as json_dumps
+#from json import loads as json_loads
+from os import path as os_path
+from sys import path as sys_path
+
+# Shared imports
 from shared.clients.gcp_logging import GCPLogger
 from shared.clients.gcp_services import get_secret as gcp_get_secret
 from shared.misc.utilities import getCurWkDtRange, http_return
 from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
-# Local imports (added to path for cleaner imports)
-from os import path as os_path
-from sys import path as sys_path
+# Local imports
+from extract.src.extractor import extract_handler as run_extract
 
-current_dir = os_path.dirname(os_path.abspath(__file__))
-sys_path.insert(0, os_path.join(current_dir, "src"))
-sys_path.insert(0, os_path.join(current_dir, "shared"))
-
-from extractor import extract_handler as run_extract
-
-
+#current_dir = os_path.dirname(os_path.abspath(__file__))
+#sys_path.insert(0, os_path.join(current_dir, "shared"))
 
 def extract(request):
     # Parse JSON body
@@ -73,6 +71,7 @@ def extract_dividends(_request):
     optional_kwargs = request.get("options", {})
     with GCPLogger() as gcp_logger:
         # Call the pure extractor logic
+        gcp_logger.info(f"Starting extraction for data category: {data_cat}")
         json_status_res = run_extract(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
-        pass
+    
     return json_status_res

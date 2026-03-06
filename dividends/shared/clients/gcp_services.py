@@ -1,10 +1,15 @@
+# GCP services client wrapper to interact with various GCP services like Secret Manager, Cloud Storage, and Dataproc
+
+# Builtin imports
 from json import dumps as json_dumps
-from pyspark.sql import SparkSession
-#from datetime import datetime
 from os import environ as os_environ
-from google.cloud import storage as gc_storage
+
+# Shared imports
 from google.cloud import secretmanager as gc_secretmanager
+from google.cloud import storage as gc_storage
+from pyspark.sql import SparkSession
 from shared.clients.gcs_naming import MS_FILE_NM, MS_FILE_NM_W_EXT, GCS_BLOB_PATH, GCS_BLOB_PATH_PREFIX, GCS_BUCKET_PATH
+
 
 def get_secret(secret_name):
     project_id = os_environ.get("GOOGLE_CLOUD_PROJECT")

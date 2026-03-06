@@ -1,8 +1,10 @@
-import logging
-from google.cloud import logging as gc_logging
+# GCP Logging client wrapper to integrate with Python's logging module and send logs to Google Cloud Logging
 
-# Setup the library to work with standard Python logging
-# This "patches" the root logger to send logs to GCP
+# Builtin imports
+import logging
+
+# Shared imports
+from google.cloud import logging as gc_logging
 
 class GCPLogger:
     __slots__ = ["client"]
@@ -13,7 +15,6 @@ class GCPLogger:
     def enable_logging(self):
         self.client = gc_logging.Client()
         self.client.setup_logging()
-        #self.logger = logging.getLogger(self.name)
     
     def disable_logging(self):
         logging.shutdown()
