@@ -44,7 +44,7 @@ def extract_handler(data_cat: str, base_url: str, symbols_lst: list, api_key: st
         res_json = extract_generic_main(full_url, req_params)
         
         # Write the JSON data to GCS
-        file_path = write_json_to_gcs(data_cat, res_json, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt)
+        write_json_to_gcs(data_cat, res_json, bucket_nm, bucket_dir_path, batch_dt, start_dt, end_dt)
     # Exception Handling
     except HTTPError as e:
         msg = f"HTTP error occurred: {e}"
@@ -64,7 +64,7 @@ def extract_handler(data_cat: str, base_url: str, symbols_lst: list, api_key: st
         return http_return(500, msg)
     
     # Extraction succeeded
-    msg = f"Data extracted and written to GCS: {file_path}"
+    msg = f"Data extracted and written to GCS: {bucket_nm}/{bucket_dir_path} for batch date: {batch_dt}, start date: {start_dt}, end date: {end_dt}"
     logger.error(msg)
     return http_return(200, msg)
     
