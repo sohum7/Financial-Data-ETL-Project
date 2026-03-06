@@ -8,8 +8,8 @@ steps:
     args:
       - -c
       - |
-        # Deploy the Cloud Function
-        echo "**** Deploying Cloud Function ****"
+        # Deploy dividends extract cloud function
+        echo "**** Building dividends extraction process ****"
 
         # exit immediately if a command exits with a non-zero status, and prevents partial deployment
         set -e
@@ -60,7 +60,7 @@ steps:
           echo "❌ Deployment failed."
           exit 1
         fi
-    waitFor: ['-'] # Run this step in parallel with the next step
+    waitFor: ['-']
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     id: 'copy-transformer-to-gcs'
@@ -68,6 +68,12 @@ steps:
     args:
       - -c
       - |
+        # Transfer dividends transform files to GCS bucket for Dataproc job to access
+        echo "**** Building dividends transformation process ****"
+
+        # exit immediately if a command exits with a non-zero status, and prevents partial deployment
+        set -e
+
         echo "**** Copying transfer.py to GCS bucket... ****"
         #### NEED TO CHANGE TRANSFORM MAIN FILE SO THAT ITS SEPARATE FROM EXTRACT MAIN FILE, THEN UPDATE THIS STEP TO COPY TRANSFORM MAIN FILE INSTEAD OF EXTRACT MAIN FILE
         gsutil cp dividends/transform/src/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/src/transformer.py;
@@ -79,7 +85,7 @@ steps:
           echo "Failed to copy file."
           exit 1
         fi
-    waitFor: ['-'] # Run this step in parallel with the previous step
+    waitFor: ['deploy-dividends-extract-function']
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -36,7 +36,7 @@ def extract_handler(data_cat: str, base_url: str, symbols_lst: list, api_key: st
     }
     
     # Construct the full API URL for the given data category
-    full_url = f"""{base_url.strip('"')}/{data_cat.strip('"')}"""
+    full_url = f"{base_url}/{data_cat}"
     logger.info(f"Constructed API URL: {full_url} with params: {req_params}")
     
     try:
