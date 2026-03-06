@@ -41,7 +41,7 @@ steps:
           --region=us-central1 \
           --project=$$GOOGLE_CLOUD_PROJECT \
           --service-account=market-stack-func-gcs-uploader@$$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
-          --entry-point=extract_dividends \
+          --entry-point=extract_entry_point \
           --source=ms_div_extract_cf \
           --allow-unauthenticated \
           --trigger-http \
@@ -58,8 +58,9 @@ steps:
         fi
     waitFor: ['-']
 
+steps:
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'submit-dividends-transform-dataproc-job'
+    id: 'build-dividends-transform-image'
     entrypoint: bash
     env:
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
@@ -67,18 +68,13 @@ steps:
     args:
       - -c
       - |
-        # Submit Dataproc job for dividends transformation
-        echo "**** Submitting Dataproc job for dividends transformation ****"
+        docker build \
+          -f  dividends/transform/Dockerfile \
+          -t  gcr.io/$PROJECT_ID/dividends-transform  .
 
-        # exit immediately if a command exits with a non-zero status, and prevents partial deployment
-        set -e
-        # Submit the Dataproc job using gcloud CLI
-        gcloud dataproc jobs submit pyspark gs://market-stack-code-dev/dataproc/dividends/transform_job.py \
-          --cluster=market-stack-dataproc-dev \
-          --region=us-central1 \
-          --project=$$GOOGLE_CLOUD_PROJECT \
-          --py-files=
-          
+images:
+  - gcr.io/$PROJECT_ID/dividends-transform
+  
 
 options:
   logging: CLOUD_LOGGING_ONLY
