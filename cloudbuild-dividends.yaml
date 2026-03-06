@@ -8,10 +8,12 @@ steps:
     args:
       - -c
       - |
-        set -e  # exit immediately if a command exits with a non-zero status, and prevents partial deployment
-        
         # Deploy the Cloud Function
         echo "**** Deploying Cloud Function ****"
+
+        # exit immediately if a command exits with a non-zero status, and prevents partial deployment
+        set -e
+
         # DEBUG: print substitutions at runtime
         echo ===================================================
         echo =========+==== Debug Build Variables ==============
