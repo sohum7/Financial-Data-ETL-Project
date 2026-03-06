@@ -5,10 +5,10 @@ import logging
 # This "patches" the root logger to send logs to GCP
 
 class GCPLogger:
-    __slots__ = ["name", "client", "logger"]
+    __slots__ = ["client"]
     
-    def __init__(self, name="GCP LOGGER") -> None:
-        self.name = name
+    def __init__(self) -> None:
+        self.client = None
         
     def enable_logging(self):
         self.client = gc_logging.Client()
@@ -21,13 +21,13 @@ class GCPLogger:
         if self.client:
             self.client.close()
     
-    def log(self, level, message): self.logger.log(level, message)
+    def log(self, level, message): logging.log(level, message)
     
-    def info(self, message): self.logger.info(message)
+    def info(self, message): logging.info(message)
     
-    def error(self, message): self.logger.error(message)
+    def error(self, message): logging.error(message)
     
-    def critical(self, message): self.logger.critical(message)
+    def critical(self, message): logging.critical(message)
     
     def __enter__(self):
         self.enable_logging()
