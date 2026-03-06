@@ -6,14 +6,14 @@ from google.cloud import storage as gc_storage
 from google.cloud import secretmanager as gc_secretmanager
 
 
-FILE_NM_DT_FORMAT = "%Y%m%d"
+#FILE_NM_DT_FORMAT = "%Y%m%d"
 # raw file format in gcs bucket for extracted data. This is used to construct the file name for the raw data stored in GCS. The file name is based on the data category, start date, end date, and file type (e.g., json).
 # Example: {file_status_type}_dividends_20240101_20240107_20240107
-MS_FILE_NM_WO_EXT = lambda DATA_CAT, BATCH_DT, START_DT, END_DT: f"{DATA_CAT.lower()}_{START_DT.strftime(FILE_NM_DT_FORMAT)}_{END_DT.strftime(FILE_NM_DT_FORMAT)}_{BATCH_DT.strftime(FILE_NM_DT_FORMAT)}"
+MS_FILE_NM_WO_EXT = lambda DATA_CAT, BATCH_DT, START_DT, END_DT: f"{DATA_CAT.lower()}_{START_DT}_{END_DT}_{BATCH_DT}"
 MS_FILE_NM_W_EXT = lambda DATA_CAT, BATCH_DT, START_DT, END_DT, FILE_TYPE: f"{MS_FILE_NM_WO_EXT(DATA_CAT, BATCH_DT, START_DT, END_DT)}.{FILE_TYPE.lower()}"
 
 GCS_PREFIX = "gs://"
-GCS_DIR_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM: f"{GCS_PREFIX}{BUCKET_NM}/{DIR_NM}/batch_date={BATCH_DT.strftime(FILE_NM_DT_FORMAT)}/"
+GCS_DIR_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM: f"{GCS_PREFIX}{BUCKET_NM}/{DIR_NM}/batch_date={BATCH_DT}/"
 GCS_FILE_PATH = lambda BATCH_DT, BUCKET_NM, DIR_NM, FILE_NM: f"{GCS_DIR_PATH(BATCH_DT, BUCKET_NM, DIR_NM)}{FILE_NM}"
 
 def get_secret(secret_name):

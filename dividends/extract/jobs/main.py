@@ -67,7 +67,7 @@ def extract_dividends(_request):
                 "bucket_directory_name": MS_DIV_RAW_FILE_BUCKET_SUBDIR, \
                 "batch_date": todays_dt, \
                 "start_date": past_monday_dt, \
-                "end_date": past_friday_dt}
+                "end_date": past_friday_dt }
     '''TEST END'''
     
     # Required parameters
