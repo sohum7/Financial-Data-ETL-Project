@@ -88,9 +88,8 @@ def extract_dividends(_request):
 
     # Optional kwargs (future-proofing)
     optional_kwargs = request.get("options", {})
-    json_status_res = 200
     with GCPLogger() as gcp_logger:
         # Call the pure extractor logic
-        #json_status_res = run_extract(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
+        json_status_res = run_extract(data_cat, base_url, symbols_lst, api_key, bucket_nm, bucket_dir_nm, batch_dt, start_dt, end_dt, logger=gcp_logger, **optional_kwargs)
         pass
     return json_status_res
