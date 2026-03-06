@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 from os import environ as os_environ
 from google.cloud import storage as gc_storage
 from google.cloud import secretmanager as gc_secretmanager
-from gcs_naming import MS_FILE_NM_W_EXT, GCS_BLOB_PATH, GCS_BLOB_PATH_PREFIX, GCS_BUCKET_PATH
+from clients.gcs_naming import MS_FILE_NM, MS_FILE_NM_W_EXT, GCS_BLOB_PATH, GCS_BLOB_PATH_PREFIX, GCS_BUCKET_PATH
 
 def get_secret(secret_name):
     project_id = os_environ.get("GOOGLE_CLOUD_PROJECT")
