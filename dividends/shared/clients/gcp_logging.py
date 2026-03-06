@@ -1,5 +1,5 @@
-from google.cloud import logging as gc_logging
 import logging
+from google.cloud import logging as gc_logging
 
 # Setup the library to work with standard Python logging
 # This "patches" the root logger to send logs to GCP

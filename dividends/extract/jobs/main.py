@@ -1,17 +1,21 @@
 from json import dumps as json_dumps
 from json import loads as json_loads
 
-#from src.extractor import extract_handler as run_extract
-
 from shared.clients.gcp_logging import GCPLogger
 from shared.clients.gcp_services import get_secret as gcp_get_secret
 from shared.misc.utilities import getCurWkDtRange, http_return
 from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV_RAW_FILE_BUCKET_NM, MS_DIV_RAW_FILE_BUCKET_SUBDIR
 
-import os
-BASE_DIR = os.path.dirname(__file__)
+from os import path as os_path
+from sys import path as sys_path
+
+BASE_DIR = os_path.dirname(__file__)
+sys_path.insert(0, os_path.join(BASE_DIR, "src"))
+sys_path.insert(0, os_path.join(BASE_DIR, "shared"))
 with GCPLogger() as gcp_logger:
     gcp_logger.error(f"Current working directory: {BASE_DIR}")
+
+from src.extractor import extract_handler as run_extract
 
 # for references
 # bucket - market-stack-....-dev
