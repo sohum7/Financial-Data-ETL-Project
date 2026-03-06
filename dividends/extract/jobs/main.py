@@ -9,13 +9,7 @@ from shared.configs.config_loader import MS_BASE_URL, MS_CAT, MS_SYMBOLS, MS_DIV
 from os import path as os_path
 from sys import path as sys_path
 
-BASE_DIR = os_path.dirname(__file__)
-sys_path.insert(0, os_path.join(BASE_DIR, "src"))
-sys_path.insert(0, os_path.join(BASE_DIR, "shared"))
-with GCPLogger() as gcp_logger:
-    gcp_logger.error(f"Current working directory: {BASE_DIR}")
-
-from extractor import extract_handler as run_extract
+from src.extractor import extract_handler as run_extract
 
 # for references
 # bucket - market-stack-....-dev
