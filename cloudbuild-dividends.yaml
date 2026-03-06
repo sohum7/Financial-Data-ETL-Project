@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'Deploy Cloud Function'
+    id: 'deploy-dividends-extract-function'
     entrypoint: bash
     env:
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
@@ -60,9 +60,10 @@ steps:
           echo "❌ Deployment failed."
           exit 1
         fi
+    waitFor: ['-'] # Run this step in parallel with the next step
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'Upload PySpark Job'
+    id: 'copy-transformer-to-gcs'
     entrypoint: bash
     args:
       - -c
@@ -78,7 +79,10 @@ steps:
           echo "Failed to copy file."
           exit 1
         fi
+    waitFor: ['-'] # Run this step in parallel with the previous step
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  substitutionOption: 'ALLOW_LOOSE'
+  substitution_option: 'ALLOW_LOOSE'
+  machineType: 'E2_HIGHCPU_4' # Example: Increases vCPUs to 8
+
