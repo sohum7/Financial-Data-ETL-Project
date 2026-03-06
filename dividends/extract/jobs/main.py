@@ -15,7 +15,7 @@ sys_path.insert(0, os_path.join(BASE_DIR, "shared"))
 with GCPLogger() as gcp_logger:
     gcp_logger.error(f"Current working directory: {BASE_DIR}")
 
-from src.extractor import extract_handler as run_extract
+from extractor import extract_handler as run_extract
 
 # for references
 # bucket - market-stack-....-dev

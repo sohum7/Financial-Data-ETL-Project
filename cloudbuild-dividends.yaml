@@ -67,8 +67,8 @@ steps:
       - |
         echo "**** Copying transfer.py to GCS bucket... ****"
         #### NEED TO CHANGE TRANSFORM MAIN FILE SO THAT ITS SEPARATE FROM EXTRACT MAIN FILE, THEN UPDATE THIS STEP TO COPY TRANSFORM MAIN FILE INSTEAD OF EXTRACT MAIN FILE
-        gsutil cp dividends/main.py gs://market-stack-code-dev/dataproc/dividends/main.py;
-        gsutil cp dividends/src/transform/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/transformer.py;
+        gsutil cp dividends/transform/src/transformer.py gs://market-stack-code-dev/dataproc/dividends/transform/src/transformer.py;
+        gsutil cp dividends/transform/jobs/transform_job.py gs://market-stack-code-dev/dataproc/dividends/transform/jobs/transform_job.py;
 
         if [ $? -eq 0 ]; then
           echo "File copied successfully."
