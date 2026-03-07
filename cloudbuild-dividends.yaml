@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy-dividends-extract-function-job'
+    id: 'deploy-dividends-extract-function-job-part-1'
     entrypoint: bash
     env:
       - ENVIRONMENT=$_ENV
@@ -13,12 +13,7 @@ steps:
         # exit immediately if a command exits with a non-zero status, and prevents partial deployment
         set -e
 
-        # DEBUG: print substitutions at runtime
-        echo ===================================================
-        echo =========+==== Debug Build Variables ==============
-        echo "ENVIRONMENT=$$ENVIRONMENT"
-        echo ===================================================
-
+        echo "**** Building dividends extraction package ****"
         # Prepare the Cloud Function source code directory
         rm  -rf  ms_div_extract_cf
         mkdir  -p  ms_div_extract_cf
@@ -31,37 +26,36 @@ steps:
         mkdir  -p  ms_div_extract_cf/shared
         cp  -r  dividends/shared/.  ms_div_extract_cf/shared/
 
-        # Deploy the Cloud Function using gcloud CLI
-        echo "**** Deploying Cloud Function ****"
-        gcloud functions deploy market-stack-dividends-extract \
-          --gen2 \
-          --runtime=python310 \
-          --region=us-central1 \
-          --project=$$PROJECT_ID \
-          --service-account=market-stack-func-gcs-uploader@$$PROJECT_ID.iam.gserviceaccount.com \
-          --entry-point=extract_entry_point \
-          --source=ms_div_extract_cf \
-          --allow-unauthenticated \
-          --trigger-http \
-          --min-instances=0 \
-          --max-instances=1 \
-          --timeout=480s \
-          --set-env-vars ENVIRONMENT=$$ENVIRONMENT
-
-        if [ $? -eq 0 ]; then
-          echo "✅ Cloud Function deployed successfully."
-        else
-          echo "❌ Deployment failed."
-          exit 1
-        fi
     waitFor: ['-']
 
-steps:
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    id: 'deploy-dividends-extract-function-job'
+    entrypoint: bash
+    env:
+      - ENVIRONMENT=$_ENV
+    args:
+      - 'gcloud'
+      - 'functions'
+      - 'deploy'
+      - 'market-stack-dividends-extract'
+      - '--gen2'
+      - '--runtime=python310'
+      - '--region=us-central1'
+      - '--source=ms_div_extract_cf'
+      - '--allow-unauthenticated'
+      - '--trigger-http'
+      - '--min-instances=0'
+      - '--max-instances=1'
+      - '--timeout=480s'
+      - '--set-env-vars ENVIRONMENT=$$ENVIRONMENT'
+    waitFor: ['deploy-dividends-extract-function-job-part-1']
+
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-dividends-transform-image'
     env:
       - ENVIRONMENT=$_ENV
     args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$PROJECT_ID/dividends-transform', '.']
+    waitFor: ['-']
 
 images:
   - gcr.io/$PROJECT_ID/dividends-transform
