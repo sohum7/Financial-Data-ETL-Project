@@ -48,7 +48,7 @@ steps:
       - '--max-instances=1'
       - '--timeout=480s'
       - '--set-env-vars'
-      - 'ENVIRONMENT=$ENVIRONMENT'
+      - 'ENVIRONMENT=$$ENVIRONMENT'
     waitFor: ['deploy-dividends-extract-function-job-part-1']
 
   - name: 'gcr.io/cloud-builders/docker'
