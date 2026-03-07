@@ -59,21 +59,15 @@ steps:
     waitFor: ['-']
 
 steps:
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  - name: 'gcr.io/cloud-builders/docker'
     id: 'build-dividends-transform-image'
-    entrypoint: bash
     env:
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - ENVIRONMENT=$_ENV
-    args:
-      - -c
-      - |
-        docker build \
-          -f  dividends/transform/Dockerfile \
-          -t  gcr.io/$PROJECT_ID/dividends-transform  .
+    args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$GOOGLE_CLOUD_PROJECT/dividends-transform', '.']
 
 images:
-  - gcr.io/$PROJECT_ID/dividends-transform
+  - gcr.io/$GOOGLE_CLOUD_PROJECT/dividends-transform
   
 
 options:

@@ -30,40 +30,38 @@ def load_config():
     
     return config, env_vars
 
-def set_vars(config, env_vars):
-    # Set variables based on config and environment variables
-    gc_project = env_vars["GOOGLE_CLOUD_PROJECT"]
-    gc_env = env_vars["ENVIRONMENT"]
-
-    ms_cfg = config["MARKET_STACK_METADATA"]
-    ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
-
-    MS_SYMBOLS = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
-    MS_BASE_URL = ms_cfg["base_url"]
-
-    MS_CAT = ms_div_cfg["name"]
-    #MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}/"
-
-    ## Extract source data
-    MS_DIV_RAW_FILE_TYPE = ms_div_cfg["raw_file_type"]
-    MS_DIV_RAW_FILE_BUCKET_NM = f"{ms_div_cfg['raw_file_bucket_base']}-{gc_env}"
-    MS_DIV_RAW_FILE_BUCKET_SUBDIR = ms_div_cfg["raw_file_bucket_subdir"]
-
-    ## Transformed data
-    MS_DIV_TFD_FILE_TYPE = ms_div_cfg["tfd_file_type"]
-    MS_DIV_TFD_FILE_BUCKET_NM = f"{ms_div_cfg['tfd_file_bucket_base']}-{gc_env}"
-    MS_DIV_TFD_FILE_BUCKET_SUBDIR = ms_div_cfg["tfd_file_bucket_subdir"]
-
-    ## Cleaned data
-    MS_DIV_CLN_FILE_TYPE = ms_div_cfg["cln_file_type"]
-    MS_DIV_CLN_FILE_BUCKET_NM = f"{ms_div_cfg['cln_file_bucket_base']}-{gc_env}"
-    MS_DIV_CLN_FILE_BUCKET_SUBDIR = ms_div_cfg["cln_file_bucket_subdir"]
-
 def main():
     # Load configuration and environment variables
+    global config, env_vars
     config, env_vars = load_config()
-    
-    # Set variables based on config and environment variables
-    set_vars(config, env_vars)
 
+# Run main function to set global variables
 main()
+
+# Set variables based on config and environment variables
+gc_project = env_vars["GOOGLE_CLOUD_PROJECT"]
+gc_env = env_vars["ENVIRONMENT"]
+
+ms_cfg = config["MARKET_STACK_METADATA"]
+ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
+
+MS_SYMBOLS = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
+MS_BASE_URL = ms_cfg["base_url"]
+
+MS_CAT = ms_div_cfg["name"]
+#MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}/"
+
+## Extract source data
+MS_DIV_RAW_FILE_TYPE = ms_div_cfg["raw_file_type"]
+MS_DIV_RAW_FILE_BUCKET_NM = f"{ms_div_cfg['raw_file_bucket_base']}-{gc_env}"
+MS_DIV_RAW_FILE_BUCKET_SUBDIR = ms_div_cfg["raw_file_bucket_subdir"]
+
+## Transformed data
+MS_DIV_TFD_FILE_TYPE = ms_div_cfg["tfd_file_type"]
+MS_DIV_TFD_FILE_BUCKET_NM = f"{ms_div_cfg['tfd_file_bucket_base']}-{gc_env}"
+MS_DIV_TFD_FILE_BUCKET_SUBDIR = ms_div_cfg["tfd_file_bucket_subdir"]
+
+## Cleaned data
+MS_DIV_CLN_FILE_TYPE = ms_div_cfg["cln_file_type"]
+MS_DIV_CLN_FILE_BUCKET_NM = f"{ms_div_cfg['cln_file_bucket_base']}-{gc_env}"
+MS_DIV_CLN_FILE_BUCKET_SUBDIR = ms_div_cfg["cln_file_bucket_subdir"]
