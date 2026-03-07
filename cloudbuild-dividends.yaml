@@ -34,21 +34,20 @@ steps:
     env:
       - ENVIRONMENT=$_ENV
     args:
-      - 'gcloud'
-      - 'functions'
-      - 'deploy'
-      - 'market-stack-dividends-extract'
-      - '--gen2'
-      - '--runtime=python310'
-      - '--region=us-central1'
-      - '--source=ms_div_extract_cf'
-      - '--allow-unauthenticated'
-      - '--trigger-http'
-      - '--min-instances=0'
-      - '--max-instances=1'
-      - '--timeout=480s'
-      - '--set-env-vars'
-      - 'ENVIRONMENT=$$ENVIRONMENT'
+      - -c
+      - |
+        set -e
+        gcloud functions deploy market-stack-dividends-extract \
+          --gen2 \
+          --runtime=python310 \
+          --region=us-central1 \
+          --source=ms_div_extract_cf \
+          --allow-unauthenticated \
+          --trigger-http \
+          --min-instances=0 \
+          --max-instances=1 \
+          --timeout=480s \
+          --set-env-vars ENVIRONMENT=$ENVIRONMENT
     waitFor: ['deploy-dividends-extract-function-job-part-1']
 
   - name: 'gcr.io/cloud-builders/docker'

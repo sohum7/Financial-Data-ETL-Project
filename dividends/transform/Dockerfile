@@ -7,6 +7,7 @@ WORKDIR /app
 # Copy requirements from transform
 COPY dividends/transform/requirements.txt ./requirements.txt
 
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy needed folders
