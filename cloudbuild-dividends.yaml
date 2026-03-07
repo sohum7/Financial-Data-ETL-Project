@@ -64,10 +64,10 @@ steps:
     env:
       - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - ENVIRONMENT=$_ENV
-    args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$GOOGLE_CLOUD_PROJECT/dividends-transform', '.']
+    args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$$GOOGLE_CLOUD_PROJECT/dividends-transform', '.']
 
 images:
-  - gcr.io/$GOOGLE_CLOUD_PROJECT/dividends-transform
+  - gcr.io/$$GOOGLE_CLOUD_PROJECT/dividends-transform
   
 
 options:
