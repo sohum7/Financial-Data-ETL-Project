@@ -3,7 +3,6 @@ steps:
     id: 'deploy-dividends-extract-function-job'
     entrypoint: bash
     env:
-      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - ENVIRONMENT=$_ENV
     args:
       - -c
@@ -17,7 +16,6 @@ steps:
         # DEBUG: print substitutions at runtime
         echo ===================================================
         echo =========+==== Debug Build Variables ==============
-        echo "GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT"
         echo "ENVIRONMENT=$$ENVIRONMENT"
         echo ===================================================
 
@@ -39,8 +37,8 @@ steps:
           --gen2 \
           --runtime=python310 \
           --region=us-central1 \
-          --project=$$GOOGLE_CLOUD_PROJECT \
-          --service-account=market-stack-func-gcs-uploader@$$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
+          --project=$$PROJECT_ID \
+          --service-account=market-stack-func-gcs-uploader@$$PROJECT_ID.iam.gserviceaccount.com \
           --entry-point=extract_entry_point \
           --source=ms_div_extract_cf \
           --allow-unauthenticated \
@@ -48,7 +46,7 @@ steps:
           --min-instances=0 \
           --max-instances=1 \
           --timeout=480s \
-          --set-env-vars ENVIRONMENT=$$ENVIRONMENT,GOOGLE_CLOUD_PROJECT=$$GOOGLE_CLOUD_PROJECT
+          --set-env-vars ENVIRONMENT=$$ENVIRONMENT
 
         if [ $? -eq 0 ]; then
           echo "✅ Cloud Function deployed successfully."
@@ -62,12 +60,11 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     id: 'build-dividends-transform-image'
     env:
-      - GOOGLE_CLOUD_PROJECT=$PROJECT_ID
       - ENVIRONMENT=$_ENV
-    args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$$GOOGLE_CLOUD_PROJECT/dividends-transform', '.']
+    args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$PROJECT_ID/dividends-transform', '.']
 
 images:
-  - gcr.io/$$GOOGLE_CLOUD_PROJECT/dividends-transform
+  - gcr.io/$PROJECT_ID/dividends-transform
   
 
 options:
