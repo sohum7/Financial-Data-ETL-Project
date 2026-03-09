@@ -4,10 +4,7 @@
 from datetime import datetime, timedelta
 
 
-def getCurWkDtRange():
-    # today
-    run_dt = datetime.today()
-
+def getCurWkDtRange(run_dt = datetime.today()) -> tuple[str, str, str]:
     # weekday(): Monday=0, Sunday=6
     monday = run_dt - timedelta(days=run_dt.weekday())  # current week Monday
     friday = monday + timedelta(days=4)                 # current week Friday

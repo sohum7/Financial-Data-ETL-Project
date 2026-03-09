@@ -48,14 +48,16 @@ def create_ms_metadata_tbl(bq_client: bq.Client, dataset_nm: str):
         f"""
             CREATE TABLE IF NOT EXISTS {dataset_nm}.ms_metadata (
                 data_cat STRING,
+                status STRING,
                 batch_dt DATE,
                 start_dt DATE,
                 end_dt DATE,
-                extract_status STRING,
-                transform_status STRING,
-                load_status STRING,
+                status STRING,
+                
                 start_time TIMESTAMP,
-                end_time TIMESTAMP
+                end_time TIMESTAMP,
+                symbols [],
+                hash (<data_cat>_<start_dt>_<end_dt>_<symbols_str>)
             )
         """
     

@@ -7,6 +7,7 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 from os import getenv as os_getenv
 from pathlib import Path
+from shared.clients.gcp_services import get_secret
 
 
 def load_config():
@@ -30,6 +31,8 @@ def load_config():
     
     return config, env_vars
 
+def load_cat_config(data_cat):
+    pass
 def main():
     # Load configuration and environment variables
     global config, env_vars
@@ -43,25 +46,26 @@ gc_project = env_vars["GOOGLE_CLOUD_PROJECT"]
 gc_env = env_vars["ENVIRONMENT"]
 
 ms_cfg = config["MARKET_STACK_METADATA"]
-ms_div_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
+ms_cat_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
 
-MS_SYMBOLS = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
+MS_SYMBOLS_LST = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
 MS_BASE_URL = ms_cfg["base_url"]
 
-MS_CAT = ms_div_cfg["name"]
-#MS_DIV_URL = f"{MS_BASE_URL}{MS_CAT}/"
+MS_CAT = ms_cat_cfg["name"]
+MS_V2_API_KEY = get_secret("MS_V2_API_KEY")
 
 ## Extract source data
-MS_DIV_RAW_FILE_TYPE = ms_div_cfg["raw_file_type"]
-MS_DIV_RAW_FILE_BUCKET_NM = f"{ms_div_cfg['raw_file_bucket_base']}-{gc_env}"
-MS_DIV_RAW_FILE_BUCKET_SUBDIR = ms_div_cfg["raw_file_bucket_subdir"]
+MS_RAW_FILE_TYPE = ms_cat_cfg["raw_file_type"]
+MS_RAW_FILE_BUCKET_NM = f"{ms_cat_cfg['raw_file_bucket_base']}-{gc_env}"
+MS_RAW_FILE_BUCKET_DIR = ms_cat_cfg["raw_file_bucket_dir"]
 
 ## Transformed data
-MS_DIV_TFD_FILE_TYPE = ms_div_cfg["tfd_file_type"]
-MS_DIV_TFD_FILE_BUCKET_NM = f"{ms_div_cfg['tfd_file_bucket_base']}-{gc_env}"
-MS_DIV_TFD_FILE_BUCKET_SUBDIR = ms_div_cfg["tfd_file_bucket_subdir"]
+MS_TFD_FILE_TYPE = ms_cat_cfg["tfd_file_type"]
+MS_TFD_FILE_BUCKET_NM = f"{ms_cat_cfg['tfd_file_bucket_base']}-{gc_env}"
+MS_TFD_FILE_BUCKET_DIR = ms_cat_cfg["tfd_file_bucket_dir"]
 
-## Cleaned data
-MS_DIV_CLN_FILE_TYPE = ms_div_cfg["cln_file_type"]
-MS_DIV_CLN_FILE_BUCKET_NM = f"{ms_div_cfg['cln_file_bucket_base']}-{gc_env}"
-MS_DIV_CLN_FILE_BUCKET_SUBDIR = ms_div_cfg["cln_file_bucket_subdir"]
+## Cleaned data location
+MS_TGT_DATASET_NM = f"{ms_cfg['bq_target_dataset_base']}-{gc_env}"
+MS_STG_DATASET_NM = f"{ms_cfg['bq_staging_dataset_base']}-{gc_env}"
+MS_TGT_TBL_NM = MS_CAT
+MS_STG_TBL_NM = f"{MS_TGT_TBL_NM}_staging"

@@ -1,5 +1,5 @@
 .git
 __pycache__/
 *.pyc
-venv
-.env
+cloudbuild-dividends.yaml
+README.md

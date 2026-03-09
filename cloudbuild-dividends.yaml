@@ -1,68 +1,24 @@
-steps:
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy-dividends-extract-function-job-part-1'
-    entrypoint: bash
-    env:
-      - ENVIRONMENT=$_ENV
-    args:
-      - -c
-      - |
-        # Deploy dividends extract cloud function
-        echo "**** Building dividends extraction process ****"
-
-        # exit immediately if a command exits with a non-zero status, and prevents partial deployment
-        set -e
-
-        echo "**** Building dividends extraction package ****"
-        # Prepare the Cloud Function source code directory
-        rm  -rf  ms_div_extract_cf
-        mkdir  -p  ms_div_extract_cf
-
-        # Copy Cloud Function entrypoint + requirements + extraction logic
-        mkdir  -p  ms_div_extract_cf/extract
-        cp -r dividends/extract/.  ms_div_extract_cf/extract/
-        
-        # Copy shared files
-        mkdir  -p  ms_div_extract_cf/shared
-        cp  -r  dividends/shared/.  ms_div_extract_cf/shared/
-
-    waitFor: ['-']
-
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    id: 'deploy-dividends-extract-function-job'
-    entrypoint: bash
-    env:
-      - ENVIRONMENT=$_ENV
-    args:
-      - -c
-      - |
-        set -e
-        gcloud functions deploy market-stack-dividends-extract \
-          --gen2 \
-          --runtime=python310 \
-          --region=us-central1 \
-          --source=ms_div_extract_cf \
-          --allow-unauthenticated \
-          --trigger-http \
-          --min-instances=0 \
-          --max-instances=1 \
-          --timeout=480s \
-          --set-env-vars ENVIRONMENT=$$ENVIRONMENT
-    waitFor: ['deploy-dividends-extract-function-job-part-1']
-
-  - name: 'gcr.io/cloud-builders/docker'
-    id: 'build-dividends-transform-image'
-    env:
-      - ENVIRONMENT=$_ENV
-    args: ['build', '-f', 'dividends/transform/Dockerfile', '-t', 'gcr.io/$PROJECT_ID/dividends-transform', '.']
-    waitFor: ['-']
-
-images:
-  - gcr.io/$PROJECT_ID/dividends-transform
-  
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-  substitutionOption: 'ALLOW_LOOSE'
-  machineType: 'E2_HIGHCPU_8'
-
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: etl-pipeline
+  namespace: default
+spec:
+  template:
+    spec:
+      # Cloud Run service account with proper IAM roles
+      serviceAccountName: ms-cloudrun-etl
+      containers:
+        - image: gcr.io/${PROJECT_ID}/etl-pipeline:latest
+          env:
+            - name: PROJECT_ID
+              value: "${PROJECT_ID}"   # dynamic project ID
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+      containerConcurrency: 1
+      timeoutSeconds: 900
+  traffic:
+    - latestRevision: true
+      percent: 100
