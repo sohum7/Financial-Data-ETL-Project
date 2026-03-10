@@ -8,36 +8,34 @@ substitutions:
   _REGION: us-central1
 
 steps:
-  # Step 1: Pull existing image for cache and Build new image
+  # Step 1: Pull & Build
   - id: 'build-image'
     name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Pull the latest image to use its layers for caching. 
-        # '|| exit 0' ensures the build continues even if no 'latest' image exists yet.
+        # Pull latest for cache (don't fail if it doesn't exist yet)
         docker pull $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest || exit 0
         
+        # Build and tag with BOTH the unique SHA and 'latest'
         docker build \
           --cache-from $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
           -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA \
           -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
           .
 
-  # Step 2: Push images to Artifact Registry (pushes both SHA and latest)
+  # Step 2: Push both tags explicitly
   - id: 'push-image'
     name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Push the specific commit tag
         docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA
-        # Push the latest tag for future caching
         docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest
 
-  # Step 3: Update YAML and Deploy Cloud Run Job
+  # Step 3: Update YAML and Deploy
   - id: 'deploy-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
@@ -48,7 +46,7 @@ steps:
         sed -i "s|IMAGE_PLACEHOLDER|$${IMAGE_PATH}|g" cloudrun.yaml
         gcloud run jobs replace cloudrun.yaml --region=$_REGION
 
-  # Step 4: Execute the Job (Fixed job name to match cloudrun.yaml)
+  # Step 4: Execute Job
   - id: 'run-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
@@ -58,6 +56,7 @@ steps:
       - 'ms-dividends-etl-job'
       - '--region=$_REGION'
 
+# This lists the images produced so Cloud Build UI shows them clearly
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest'
