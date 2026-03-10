@@ -28,7 +28,14 @@ steps:
   # Step 2: Push images to Artifact Registry (pushes both SHA and latest)
   - id: 'push-image'
     name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '--all-tags', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Push the specific commit tag
+        docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA
+        # Push the latest tag for future caching
+        docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest
 
   # Step 3: Update YAML and Deploy Cloud Run Job
   - id: 'deploy-job'
