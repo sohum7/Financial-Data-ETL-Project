@@ -21,11 +21,11 @@ def load_config():
     env_vars = {
         "ENVIRONMENT": os_getenv("ENVIRONMENT", ""),
         "BUCKET_SUFFIX": os_getenv("BUCKET_SUFFIX", ""),
-        "GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT", "")
+        "PROJECT_ID": os_getenv("PROJECT_ID", "")
     }
     
-    if not env_vars["GOOGLE_CLOUD_PROJECT"]:
-        raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT")
+    if not env_vars["PROJECT_ID"]:
+        raise ValueError("missing required environment variable: PROJECT_ID")
     if not env_vars["ENVIRONMENT"]:
         raise ValueError("missing required environment variable: ENV")
     
@@ -42,7 +42,7 @@ def main():
 main()
 
 # Set variables based on config and environment variables
-gc_project = env_vars["GOOGLE_CLOUD_PROJECT"]
+gc_project = env_vars["PROJECT_ID"]
 gc_env = env_vars["ENVIRONMENT"]
 
 ms_cfg = config["MARKET_STACK_METADATA"]
