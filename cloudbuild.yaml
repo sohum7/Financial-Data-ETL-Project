@@ -42,7 +42,9 @@ steps:
       "jobs",
       "replace",
       "cloudrun.yaml",
-      "--region=$_REGION"
+      "--region=$_REGION",
+      "--set-env-vars",
+      "PROJECT_ID=$PROJECT_ID"
     ]
   waitFor: ['push', 'prepare-yaml']
 
