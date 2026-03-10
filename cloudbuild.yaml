@@ -17,14 +17,14 @@ steps:
       - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
       - '.'
 
-  # Step 2: Push to Artifact Registry
+  # Step 2: Push image to Artifact Registry
   - id: 'push-image'
     name: 'gcr.io/cloud-builders/docker'
     args: 
       - 'push'
       - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
 
-  # Step 3: Update YAML and Deploy
+  # Step 3: Update YAML and Deploy Cloud Run Job
   - id: 'deploy-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
@@ -39,6 +39,7 @@ steps:
         
         # 3. Apply the configuration to Cloud Run
         gcloud run jobs replace cloudrun.yaml --region=$_REGION
+  # Step 4: Run Cloud Run Job
   - id: 'run-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
