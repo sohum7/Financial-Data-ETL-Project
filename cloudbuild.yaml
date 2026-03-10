@@ -47,6 +47,7 @@ steps:
       - 'jobs' 
       - 'execute' 
       - 'ms-cloudrun-etl-job'
+      - '--region=$_REGION'
 
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
