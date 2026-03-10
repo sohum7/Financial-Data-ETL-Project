@@ -1,14 +1,14 @@
 apiVersion: run.googleapis.com/v1
 kind: Job
 metadata:
-  name: ms-dividends-etl-job
+  name: ms-cloudrun-etl-job
 spec:
   template:
     spec:
       template:
         spec:
           # Ensure this service account exists in your project
-          serviceAccountName: ms-cloudrun-etl
+          serviceAccountName: ms-cloudrun-etl-sa
           containers:
             - name: ms-etl-container
               # Cloud Build will swap this placeholder for the real image

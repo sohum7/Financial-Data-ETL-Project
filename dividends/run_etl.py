@@ -50,7 +50,7 @@ def run_pipeline():
     
     with GCPLogger() as gcp_logger:
         gcp_logger.info("Starting extraction process...")
-        raw_json = extract_run(symbols_lst, batch_dt, start_dt, end_dt, logger=gcp_logger)
+        raw_json = extract_run(MS_CAT, symbols_lst_str, batch_dt, start_dt, end_dt, logger=gcp_logger)
         
         if raw_json is None:
             gcp_logger.error("Extraction failed. No data returned from API.")
@@ -88,7 +88,7 @@ def run_pipeline():
         
         
         gcp_logger.info("Starting to save transformed DataFrame to GCS...")
-        week_specific_dir = f"{MS_TFD_FILE_BUCKET_DIR}{"" if MS_TFD_FILE_BUCKET_DIR.endswith('/') else '/'}{sub_dir}"
+        week_specific_dir = f"{MS_TFD_FILE_BUCKET_DIR}{'' if MS_TFD_FILE_BUCKET_DIR.endswith('/') else '/'}{sub_dir}"
         parquet_file_path = write_df_to_gcs(df, MS_TFD_FILE_BUCKET_NM, week_specific_dir, partition_col="symbol", cluster_col="market_dt", file_type=file_type, save_mode="append")
         if parquet_file_path is None:
             gcp_logger.error("Transformed files not saved")
