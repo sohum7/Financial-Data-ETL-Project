@@ -5,12 +5,18 @@ metadata:
 spec:
   template:
     spec:
-      serviceAccountName: ms-cloudrun-etl
-      containers:
-        - image: gcr.io/$PROJECT_ID/etl-pipeline:latest
-          command: ["python"]
-          args: ["dividends/run_etl.py"]
-      timeoutSeconds: 1800
-  executionTemplate:
-    parallelism: 1
-    taskCount: 1
+      template:
+        spec:
+          # Ensure this service account exists in your project
+          serviceAccountName: ms-cloudrun-etl
+          containers:
+            - name: ms-etl-container
+              # Cloud Build will swap this placeholder for the real image
+              image: IMAGE_PLACEHOLDER
+              command: ["python"]
+              args: ["dividends/run_etl.py"]
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: "512Mi"
+          timeoutSeconds: 1800

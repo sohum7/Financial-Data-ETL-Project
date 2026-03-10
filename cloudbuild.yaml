@@ -13,7 +13,8 @@ steps:
     name: 'gcr.io/cloud-builders/docker'
     args: 
       - 'build'
-      - '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
       - '.'
 
   # Step 2: Push to Artifact Registry
