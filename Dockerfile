@@ -7,7 +7,7 @@ COPY . /app
 
 # Install dependencies
 RUN pip install --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r dividends/requirements.txt
 
 ENV PYTHONUNBUFFERED=1
 

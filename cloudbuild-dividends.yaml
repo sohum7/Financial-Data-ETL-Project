@@ -1,24 +1,23 @@
-apiVersion: serving.knative.dev/v1
-kind: Service
+apiVersion: run.googleapis.com/v1
+kind: Job
 metadata:
-  name: etl-pipeline
+  name: ms-etl-pipeline-job
   namespace: default
 spec:
   template:
     spec:
-      # Cloud Run service account with proper IAM roles
-      serviceAccountName: ms-cloudrun-etl
+      serviceAccountName: ms-cloudrun-etl   # your SA
       containers:
         - image: gcr.io/${PROJECT_ID}/etl-pipeline:latest
           env:
             - name: PROJECT_ID
-              value: "${PROJECT_ID}"   # dynamic project ID
+              value: "${PROJECT_ID}"         # dynamic project ID
           resources:
             limits:
-              memory: "512Mi"
               cpu: "1"
-      containerConcurrency: 1
-      timeoutSeconds: 900
-  traffic:
-    - latestRevision: true
-      percent: 100
+              memory: "2Gi"
+      timeoutSeconds: 1800                    # adjust if ETL runs long
+      maxRetries: 1                           # retry if job fails
+  executionTemplate:
+    parallelism: 1                             # 1 container runs per job
+    taskCount: 1
