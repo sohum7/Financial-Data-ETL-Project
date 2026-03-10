@@ -8,7 +8,7 @@ substitutions:
   _REGION: us-central1
 
 steps:
-  # Step 1: Build and tag with TWO names
+  # Step 1: Build and tag with BOTH names
   - id: 'build-image'
     name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
@@ -25,17 +25,17 @@ steps:
           -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
           .
 
-  # Step 2: Push each tag explicitly
+  # Step 2: Push each tag individually by name:tag
   - id: 'push-image'
     name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Explicitly push the unique commit SHA
+        # Push the unique commit tag
         docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA
         
-        # Explicitly push the 'latest' tag for future caching
+        # Push the latest tag so the NEXT build can use it for caching
         docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest
 
   # Step 3: Update YAML and Deploy
