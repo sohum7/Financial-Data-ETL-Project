@@ -39,6 +39,14 @@ steps:
         
         # 3. Apply the configuration to Cloud Run
         gcloud run jobs replace cloudrun.yaml --region=$_REGION
+  - id: 'run-job'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - 'gcloud'
+      - 'run' 
+      - 'jobs' 
+      - 'execute' 
+      - 'ms-cloudrun-etl-job'
 
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
