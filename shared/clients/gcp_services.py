@@ -2,9 +2,10 @@
 
 # Builtin imports
 from json import dumps as json_dumps
-from os import environ as os_environ
+from os import getenv as os_getenv
 
 # Shared imports
+from google.auth import default
 from google.cloud import secretmanager as gc_secretmanager
 from google.cloud import storage as gc_storage
 from pyspark.sql import SparkSession
@@ -12,7 +13,7 @@ from shared.clients.gcp_gcs_naming import MS_FILE_NM, GCS_BUCKET_PATH,GCS_BLOB_P
 
 
 def get_secret(secret_name):
-    project_id = os_environ.get("PROJECT_ID")
+    project_id = os_getenv("GOOGLE_CLOUD_PROJECT")
     client = gc_secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})

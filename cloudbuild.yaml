@@ -20,6 +20,7 @@ steps:
     - -c
     - |
       sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
+      sed -i "s|PROJECT_ID_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
   waitFor: ['-']  # can run in parallel with build
 
 # 3️⃣ Push image (waits for build)
@@ -42,9 +43,7 @@ steps:
       "jobs",
       "replace",
       "cloudrun.yaml",
-      "--region=$_REGION",
-      "--set-env-vars",
-      "PROJECT_ID=$PROJECT_ID"
+      "--region=$_REGION"
     ]
   waitFor: ['push', 'prepare-yaml']
 
