@@ -8,40 +8,30 @@ substitutions:
   _REGION: us-central1
 
 steps:
-  # Step 1: Simple Build
-  # We tag it with 'latest' locally so the next build can find a cache reference
-  - id: 'build-image'
+  # Step 1: Build the image with args in one line
+  - id: 'build'
     name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'build'
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest'
-      - '.'
+    args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA', '.']
 
-  # Step 2: Update the YAML file
-  - id: 'prepare-deploy'
+  # Step 2: Swap the placeholder in the YAML
+  - id: 'prepare-yaml'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        IMAGE_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
-        sed -i "s|IMAGE_PLACEHOLDER|$${IMAGE_PATH}|g" cloudrun.yaml
+        sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
 
-  # Step 3: Replace the Job definition
-  - id: 'deploy-job'
+  # Step 3: Deploy the Job
+  - id: 'deploy'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args: ['gcloud', 'run', 'jobs', 'replace', 'cloudrun.yaml', '--region=$_REGION']
 
   # Step 4: Execute the Job
-  - id: 'run-job'
+  - id: 'execute'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args: ['gcloud', 'run', 'jobs', 'execute', 'ms-dividends-etl-job', '--region=$_REGION']
 
-# CLOUD BUILD AUTOMATIC PUSH:
-# Listing them here tells Cloud Build to handle the 'docker push' for you.
+# Cloud Build pushes the image defined here automatically
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
-  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest'
