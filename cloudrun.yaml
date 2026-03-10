@@ -1,0 +1,19 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: dividends-etl-job
+spec:
+  template:
+    spec:
+      serviceAccountName: ms-cloudrun-etl
+      containers:
+        - image: gcr.io/$PROJECT_ID/etl-pipeline:latest
+          command: ["python"]
+          args: ["dividends/run_etl.py"]
+          env:
+            - name: PROJECT_ID
+              value: "$PROJECT_ID"
+      timeoutSeconds: 1800
+  executionTemplate:
+    parallelism: 1
+    taskCount: 1

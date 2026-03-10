@@ -1,0 +1,22 @@
+steps:
+  # Step 1: Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/[REPO]/[IMAGE]:$COMMIT_SHA', '.']
+
+  # Step 2: Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/[REPO]/[IMAGE]:$COMMIT_SHA']
+
+  # Step 3: Deploy using the Cloud Run service YAML
+  # This replaces the service's configuration with your local YAML file
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args: 
+      - 'run'
+      - 'services'
+      - 'replace'
+      - 'service.yaml'
+      - '--region=us-central1'
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/[REPO]/[IMAGE]:$COMMIT_SHA'
