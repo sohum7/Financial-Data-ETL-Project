@@ -1,39 +1,43 @@
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+substitutions:
+  _REPO_NAME: financial-data-etl-project
+  _IMAGE_NAME: ms-etl
+  _REGION: us-central1
+
 steps:
   # Step 1: Build the Docker image
-  - name: 'gcr.io/cloud-builders/docker'
-    args: [
-      'build', 
-      '--cache-from', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest',
-      '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA', 
-      '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest',
-      '.'
-    ]
-
-  # Step 2: Push the image to Artifact Registry
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA']
-
-  # Step 3: Deploy using the Cloud Run service YAML
-  # This replaces the service's configuration with your local YAML file
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
+  - id: 'build-image'
+    name: 'gcr.io/cloud-builders/docker'
     args: 
-      - 'run'
-      - 'jobs'
-      - 'deploy'
-      - 'ms-dividends-etl-job' # Your Job name
-      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
-      - '--region=$_REGION'
-      - '--set-env-vars=PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
+      - 'build'
+      - '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+      - '.'
+
+  # Step 2: Push to Artifact Registry
+  - id: 'push-image'
+    name: 'gcr.io/cloud-builders/docker'
+    args: 
+      - 'push'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+
+  # Step 3: Update YAML and Deploy
+  - id: 'deploy-job'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # 1. Define the full image path
+        IMAGE_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
+        
+        # 2. Swap the placeholder in the YAML for the actual image path
+        sed -i "s|IMAGE_PLACEHOLDER|$${IMAGE_PATH}|g" cloudrun.yaml
+        
+        # 3. Apply the configuration to Cloud Run
+        gcloud run jobs replace cloudrun.yaml --region=$_REGION
 
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
-
-substitutions:
-  _REGION: us-central1
-  _REPO_NAME: financial-data-etl-project
-  _IMAGE_NAME: ms-etl
-
-options:
-  logging: CLOUD_LOGGING_ONLY
-  machine_type: E2_HIGHCPU_8
