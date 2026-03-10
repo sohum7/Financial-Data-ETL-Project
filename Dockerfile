@@ -1,17 +1,17 @@
-# Stage 1: Builder
-FROM python:3.11-slim as builder
-WORKDIR /app
-COPY requirements.txt .
-# Install to a local folder
-RUN pip install --user --no-cache-dir -r requirements.txt
-
-# Stage 2: Final Image
 FROM python:3.11-slim
+
+# Create and move into the /app folder
 WORKDIR /app
-# Copy only the installed packages from the builder stage
-COPY --from=builder /root/.local /root/.local
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of your code
 COPY . .
 
-ENV PATH=/root/.local/bin:$PATH
+# Set the path so Python finds your 'shared' folder
 ENV PYTHONPATH="."
+
+# Run the ETL script
 CMD ["python", "-m", "dividends.run_etl"]
