@@ -1,7 +1,7 @@
 apiVersion: run.googleapis.com/v1
 kind: Job
 metadata:
-  name: dividends-etl-job
+  name: ms-dividends-etl-job
 spec:
   template:
     spec:
@@ -10,9 +10,6 @@ spec:
         - image: gcr.io/$PROJECT_ID/etl-pipeline:latest
           command: ["python"]
           args: ["dividends/run_etl.py"]
-          env:
-            - name: PROJECT_ID
-              value: "$PROJECT_ID"
       timeoutSeconds: 1800
   executionTemplate:
     parallelism: 1

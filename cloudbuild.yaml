@@ -1,11 +1,11 @@
 steps:
   # Step 1: Build the Docker image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/[REPO]/[IMAGE]:$COMMIT_SHA', '.']
+    args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA', '.']
 
   # Step 2: Push the image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/[REPO]/[IMAGE]:$COMMIT_SHA']
+    args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA']
 
   # Step 3: Deploy using the Cloud Run service YAML
   # This replaces the service's configuration with your local YAML file
@@ -13,10 +13,18 @@ steps:
     entrypoint: gcloud
     args: 
       - 'run'
-      - 'services'
-      - 'replace'
-      - 'service.yaml'
-      - '--region=us-central1'
+      - 'jobs'
+      - 'deploy'
+      - 'ms-dividends-etl-job' # Your Job name
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+      - '--region=$_REGION'
+      - '--source=.'
+      - '--set-env-vars=PROJECT_ID=$PROJECT_ID,GOOGLE_CLOUD_PROJECT=$PROJECT_ID'
 
 images:
-  - 'us-central1-docker.pkg.dev/$PROJECT_ID/[REPO]/[IMAGE]:$COMMIT_SHA'
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+
+substitutions:
+  _REPO_NAME: my-repository
+  _IMAGE_NAME: my-app
+  _REGION: us-central1
