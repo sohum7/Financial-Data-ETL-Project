@@ -25,8 +25,8 @@ images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
 
 substitutions:
-  _REPO_NAME: my-repository
-  _IMAGE_NAME: my-app
+  _REPO_NAME: Financial-Data-ETL-Project
+  _IMAGE_NAME: ms-etl
   _REGION: us-central1
 
 options:
