@@ -1,46 +1,71 @@
-# Steps
 steps:
-  # Step 1: Build (Starts immediately)
-  - id: 'build'
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA', '.']
-    waitFor: ['-'] 
 
-  # Step 2: Push (Must wait for build)
-  - id: 'push'
-    name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA']
-    waitFor: ['build']
+# 1️⃣ Build image
+- id: build
+  name: gcr.io/cloud-builders/docker
+  args:
+    [
+      "build",
+      "-t",
+      "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA",
+      "."
+    ]
+  waitFor: ['-']  # starts immediately
 
-  # Step 3: Prepare YAML (Starts immediately in parallel with Build)
-  - id: 'prepare-yaml'
-    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
-    waitFor: ['-']
+# 2️⃣ Prepare YAML in-place (replace IMAGE_PLACEHOLDER)
+- id: prepare-yaml
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
+  waitFor: ['-']  # can run in parallel with build
 
-  # Step 4: Deploy (Waits for the Push to finish and the YAML to be ready)
-  - id: 'deploy-job'
-    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    args: ['gcloud', 'run', 'jobs', 'replace', 'cloudrun.yaml', '--region=$_REGION']
-    waitFor: ['push', 'prepare-yaml']
+# 3️⃣ Push image (waits for build)
+- id: push
+  name: gcr.io/cloud-builders/docker
+  args:
+    [
+      "push",
+      "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
+    ]
+  waitFor: ['build']
 
-  # Step 5: Execute
-  - id: 'run-job'
-    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    args: ['gcloud', 'run', 'jobs', 'execute', 'ms-dividends-etl-job', '--region=$_REGION']
-    waitFor: ['deploy-job']
+# 4️⃣ Deploy Cloud Run Job (waits for push + prepared YAML)
+- id: deploy-job
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  args:
+    [
+      "gcloud",
+      "run",
+      "jobs",
+      "replace",
+      "cloudrun.yaml",
+      "--region=$_REGION"
+    ]
+  waitFor: ['push', 'prepare-yaml']
 
-# This section ensures the image is indexed by GCP and shown in the Build History
+# 5️⃣ Execute Job (waits for deploy)
+- id: run-job
+  name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  args:
+    [
+      "gcloud",
+      "run",
+      "jobs",
+      "execute",
+      "ms-cloudrun-etl-job",
+      "--region=$_REGION"
+    ]
+  waitFor: ['deploy-job']
+
 images:
-  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+- "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'
+  machineType: E2_HIGHCPU_8
 
 substitutions:
   _REPO_NAME: financial-data-etl-project

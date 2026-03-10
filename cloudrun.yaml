@@ -7,11 +7,9 @@ spec:
     spec:
       template:
         spec:
-          # Ensure this service account exists in your project
           serviceAccountName: ms-cloudrun-etl-sa
           containers:
             - name: ms-etl-container
-              # Cloud Build will swap this placeholder for the real image
               image: IMAGE_PLACEHOLDER
               command: ["python"]
               args: ["dividends/run_etl.py"]
@@ -20,3 +18,4 @@ spec:
                   cpu: "1"
                   memory: "512Mi"
           timeoutSeconds: 1800
+          maxRetries: 3
