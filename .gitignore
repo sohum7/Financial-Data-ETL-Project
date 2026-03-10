@@ -6,3 +6,4 @@ dividends/configs/config.prod.ini
 *.env
 __pycache__/
 *.pyc
+scripts
