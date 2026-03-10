@@ -8,21 +8,27 @@ substitutions:
   _REGION: us-central1
 
 steps:
-  # Step 1: Build the Docker image
+  # Step 1: Pull existing image for cache and Build new image
   - id: 'build-image'
     name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'build'
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
-      - '.'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Pull the latest image to use its layers for caching. 
+        # '|| exit 0' ensures the build continues even if no 'latest' image exists yet.
+        docker pull $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest || exit 0
+        
+        docker build \
+          --cache-from $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
+          -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA \
+          -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
+          .
 
-  # Step 2: Push image to Artifact Registry
+  # Step 2: Push images to Artifact Registry (pushes both SHA and latest)
   - id: 'push-image'
     name: 'gcr.io/cloud-builders/docker'
-    args: 
-      - 'push'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+    args: ['push', '--all-tags', '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME']
 
   # Step 3: Update YAML and Deploy Cloud Run Job
   - id: 'deploy-job'
@@ -31,24 +37,20 @@ steps:
     args:
       - '-c'
       - |
-        # 1. Define the full image path
         IMAGE_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
-        
-        # 2. Swap the placeholder in the YAML for the actual image path
         sed -i "s|IMAGE_PLACEHOLDER|$${IMAGE_PATH}|g" cloudrun.yaml
-        
-        # 3. Apply the configuration to Cloud Run
         gcloud run jobs replace cloudrun.yaml --region=$_REGION
-  # Step 4: Run Cloud Run Job
+
+  # Step 4: Execute the Job (Fixed job name to match cloudrun.yaml)
   - id: 'run-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
-      - 'gcloud'
       - 'run' 
       - 'jobs' 
       - 'execute' 
-      - 'ms-cloudrun-etl-job'
+      - 'ms-dividends-etl-job'
       - '--region=$_REGION'
 
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest'
