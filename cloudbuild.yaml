@@ -8,56 +8,56 @@ substitutions:
   _REGION: us-central1
 
 steps:
-  # Step 1: Build and tag with BOTH names
+  # Step 1: Build & Tag
   - id: 'build-image'
     name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Pull the latest image for cache (ignore failure if it's the first time)
-        docker pull $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest || exit 0
+        # Construct the base path
+        FULL_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME"
         
-        # Build the image and apply BOTH tags locally
+        echo "Pulling latest for cache..."
+        docker pull $${FULL_PATH}:latest || exit 0
+        
+        echo "Building image with tags..."
         docker build \
-          --cache-from $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
-          -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA \
-          -t $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest \
+          --cache-from $${FULL_PATH}:latest \
+          -t $${FULL_PATH}:$COMMIT_SHA \
+          -t $${FULL_PATH}:latest \
           .
 
-  # Step 2: Push each tag individually by name:tag
+  # Step 2: Push
   - id: 'push-image'
     name: 'gcr.io/cloud-builders/docker'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        # Push the unique commit tag
-        docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA
+        FULL_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME"
         
-        # Push the latest tag so the NEXT build can use it for caching
-        docker push $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest
+        echo "Pushing Commit SHA tag..."
+        docker push $${FULL_PATH}:$COMMIT_SHA
+        
+        echo "Pushing Latest tag..."
+        docker push $${FULL_PATH}:latest
 
-  # Step 3: Update YAML and Deploy
+  # Step 3: Deploy
   - id: 'deploy-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - '-c'
       - |
-        IMAGE_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
-        sed -i "s|IMAGE_PLACEHOLDER|$${IMAGE_PATH}|g" cloudrun.yaml
+        FULL_PATH="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME"
+        sed -i "s|IMAGE_PLACEHOLDER|$${FULL_PATH}:$COMMIT_SHA|g" cloudrun.yaml
         gcloud run jobs replace cloudrun.yaml --region=$_REGION
 
-  # Step 4: Execute Job
+  # Step 4: Execute
   - id: 'run-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    args:
-      - 'run' 
-      - 'jobs' 
-      - 'execute' 
-      - 'ms-dividends-etl-job'
-      - '--region=$_REGION'
+    args: ['run', 'jobs', 'execute', 'ms-dividends-etl-job', '--region=$_REGION']
 
 images:
   - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA'
