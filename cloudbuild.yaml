@@ -23,7 +23,7 @@ steps:
     waitFor: ['-']
 
   # Step 4: Deploy (Waits for the Push to finish and the YAML to be ready)
-  - id: 'deploy'
+  - id: 'deploy-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args: ['gcloud', 'run', 'jobs', 'replace', 'cloudrun.yaml', '--region=$_REGION']
     waitFor: ['push', 'prepare-yaml']
@@ -32,7 +32,7 @@ steps:
   - id: 'run-job'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args: ['gcloud', 'run', 'jobs', 'execute', 'ms-dividends-etl-job', '--region=$_REGION']
-    waitFor: ['deploy']
+    waitFor: ['deploy-job']
 
 # This section ensures the image is indexed by GCP and shown in the Build History
 images:
