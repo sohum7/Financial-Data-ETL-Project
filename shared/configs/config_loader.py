@@ -40,7 +40,7 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str]]:
     project_id, env_vars["API_KEY"] = get_secret("MARKET_STACK_V2_API_KEY")
     if not env_vars["PROJECT_ID"]: env_vars["PROJECT_ID"] = project_id
     if not env_vars["GOOGLE_CLOUD_PROJECT"]: env_vars["GOOGLE_CLOUD_PROJECT"] = project_id
-    if env_vars["GCP_PROJECT_ID"] != env_vars["PROJECT_ID"]: raise ValueError("vars PROJECT_ID and GOOGLE_CLOUD_PROJECT do not match")
+    if env_vars["GOOGLE_CLOUD_PROJECT"] != env_vars["PROJECT_ID"]: raise ValueError("vars PROJECT_ID and GOOGLE_CLOUD_PROJECT do not match")
     #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     #if not env_vars["API_KEY"]:
     #    raise ValueError("Missing Application Default Credentials. Please set up ADC.")
