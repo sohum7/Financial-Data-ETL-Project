@@ -22,7 +22,7 @@ def get_secret(secret_name):
     response = client.access_secret_version(request={"name": name})
     return project_id, response.payload.data.decode(decode_type)
 
-def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
+def load_config() -> tuple[ ConfigParser, dict[ str, str]]:
     BASE_DIR = Path(__file__).resolve().parent
     
     load_dotenv()
@@ -31,17 +31,16 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     config.read(BASE_DIR / "config.ini") # Load base first
     
     env_vars = {
-        "ENVIRONMENT": os_getenv("ENVIRONMENT"),
-        "PROJECT_ID": "",
-        "GOOGLE_CLOUD_PROJECT": "",
+        "ENVIRONMENT": os_getenv("ENVIRONMENT", ""),
+        "PROJECT_ID": os_getenv("PROJECT_ID", ""),
+        "GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT", ""),
         "API_KEY": ""
-        #,
-        #"PROJECT_ID": os_getenv("PROJECT_ID"),
-        #"GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")'''
     }
     
-    env_vars["PROJECT_ID"], env_vars["API_KEY"] = get_secret("MARKET_STACK_V2_API_KEY")
-    env_vars["GCP_PROJECT_ID"] = env_vars["PROJECT_ID"]
+    project_id, env_vars["API_KEY"] = get_secret("MARKET_STACK_V2_API_KEY")
+    if not env_vars["PROJECT_ID"]: env_vars["PROJECT_ID"] = project_id
+    if not env_vars["GOOGLE_CLOUD_PROJECT"]: env_vars["GOOGLE_CLOUD_PROJECT"] = project_id
+    if env_vars["GCP_PROJECT_ID"] != env_vars["PROJECT_ID"]: raise ValueError("vars PROJECT_ID and GOOGLE_CLOUD_PROJECT do not match")
     #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     #if not env_vars["API_KEY"]:
     #    raise ValueError("Missing Application Default Credentials. Please set up ADC.")
