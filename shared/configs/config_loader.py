@@ -8,12 +8,12 @@ from dotenv import load_dotenv
 from os import getenv as os_getenv
 from pathlib import Path
 from google.auth import default as ga_default
+from google.auth.exceptions import ga_DefaultCredentialsError
 from google.cloud import secretmanager as gc_secretmanager
 
 
 def get_secret(secret_name):
     #project_id = os_getenv("PROJECT_ID")
-
     _, project_id = ga_default()
     project_id = GC_PROJECT_ID
     client = gc_secretmanager.SecretManagerServiceClient()
@@ -30,12 +30,17 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     config.read(BASE_DIR / "config.ini") # Load base first
     
     env_vars = {
-        "ENVIRONMENT": os_getenv("ENVIRONMENT")
+        "ENVIRONMENT": os_getenv("ENVIRONMENT"),
+        "API_KEY": ""
         #,
         #"PROJECT_ID": os_getenv("PROJECT_ID"),
         #"GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")'''
     }
     
+    try:
+        env_vars["API_KEY"] = get_secret("MS_V2_API_KEY")
+    except ga_DefaultCredentialsError:
+        print("Could not find Application Default Credentials. Please set up ADC.")
     #if not env_vars["PROJECT_ID"] and not env_vars["GOOGLE_CLOUD_PROJECT"]:
     #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     if not env_vars["ENVIRONMENT"]:
@@ -61,18 +66,17 @@ def main(data_cat="dividends"):
     #GC_PROJECT_ID = env_vars["PROJECT_ID"]
     _, GC_PROJECT_ID = ga_default()
     GC_ENV = env_vars["ENVIRONMENT"]
+    MS_V2_API_KEY = env_vars["API_KEY"]
     
     ms_cfg = config["MARKET_STACK_METADATA"]
     ms_cat_cfg_nm = f"MARKET_STACK_{data_cat.upper()}_METADATA"
-    if ms_cat_cfg_nm in config: ms_cat_cfg = config[ms_cat_cfg_nm] 
+    if ms_cat_cfg_nm in config: ms_cat_cfg = config[ms_cat_cfg_nm]
     else: raise Exception(f"{data_cat} not a supported data category for Market Stack API wihin config.ini file")
     MS_CAT = ms_cat_cfg["name"]
     MS_SYMBOLS_LST = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
     MS_DATA_CTGYS_LST = [data_cat.strip() for data_cat in ms_cfg["data_ctgys"].split(",")]
     MS_BASE_URL = ms_cfg["base_url"]
     MS_CAT_URL = f"{MS_BASE_URL}{'' if MS_BASE_URL.endswith('/') else '/'}{MS_CAT.lower()}"
-    
-    MS_V2_API_KEY = get_secret("MS_V2_API_KEY")
     
     ## Extract source data
     MS_RAW_FILE_TYPE = ms_cat_cfg["raw_file_type"]
