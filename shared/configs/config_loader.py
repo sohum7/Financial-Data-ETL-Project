@@ -15,7 +15,8 @@ from google.cloud import secretmanager as gc_secretmanager
 def get_secret(secret_name):
     #project_id = os_getenv("PROJECT_ID")
     _, project_id = ga_default()
-    project_id = GC_PROJECT_ID
+    global GC_PROJECT_ID
+    GC_PROJECT_ID = project_id
     client = gc_secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})
