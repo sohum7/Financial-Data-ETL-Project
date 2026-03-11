@@ -10,7 +10,7 @@ from pathlib import Path
 from shared.clients.gcp_services import get_secret
 
 
-def load_config() -> :
+def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     BASE_DIR = Path(__file__).resolve().parent
     
     load_dotenv()
@@ -31,8 +31,9 @@ def load_config() -> :
     
     return config, env_vars
 
-def load_cat_config(data_cat):
+def load_cat_config(data_cat) -> None:
     pass
+
 def main():
     # Load configuration and environment variables
     global config, env_vars
