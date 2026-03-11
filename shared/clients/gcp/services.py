@@ -5,20 +5,10 @@ from json import dumps as json_dumps
 from os import getenv as os_getenv
 
 # Shared imports
-from google.auth import default
-from google.cloud import secretmanager as gc_secretmanager
 from google.cloud import storage as gc_storage
 from pyspark.sql import SparkSession
 from shared.clients.gcp.naming_conv import MS_FILE_NM, GCS_BUCKET_PATH, GCS_BLOB_PATH, DF_SAVE_PATH
-from shared.configs.config_loader import GC_PROJECT_ID
 
-
-def get_secret(secret_name):
-    project_id = os_getenv("PROJECT_ID")
-    client = gc_secretmanager.SecretManagerServiceClient()
-    name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-    response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("UTF-8")
 
 def write_json_to_gcs(data, bucket_nm, dir_path, file_nm, batch_dt, start_dt, end_dt) -> None:
     file_type = "json"

@@ -7,8 +7,19 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 from os import getenv as os_getenv
 from pathlib import Path
-from shared.clients.gcp.services import get_secret
+from google.auth import default as ga_default
+from google.cloud import secretmanager as gc_secretmanager
 
+
+def get_secret(secret_name):
+    #project_id = os_getenv("PROJECT_ID")
+
+    _, project_id = ga_default()
+    project_id = GC_PROJECT_ID
+    client = gc_secretmanager.SecretManagerServiceClient()
+    name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    response = client.access_secret_version(request={"name": name})
+    return response.payload.data.decode("UTF-8")
 
 def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     BASE_DIR = Path(__file__).resolve().parent
@@ -19,13 +30,14 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     config.read(BASE_DIR / "config.ini") # Load base first
     
     env_vars = {
-        "ENVIRONMENT": os_getenv("ENVIRONMENT"),
-        "PROJECT_ID": os_getenv("PROJECT_ID"),
-        "GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")
+        "ENVIRONMENT": os_getenv("ENVIRONMENT")
+        #,
+        #"PROJECT_ID": os_getenv("PROJECT_ID"),
+        #"GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")'''
     }
     
-    if not env_vars["PROJECT_ID"] and not env_vars["GOOGLE_CLOUD_PROJECT"]:
-        raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
+    #if not env_vars["PROJECT_ID"] and not env_vars["GOOGLE_CLOUD_PROJECT"]:
+    #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     if not env_vars["ENVIRONMENT"]:
         raise ValueError("missing required environment variable: ENVIRONMENT")
     
@@ -46,7 +58,8 @@ def main(data_cat="dividends"):
     config, env_vars = load_config()
     
     # Set variables based on config and environment variables
-    GC_PROJECT_ID = env_vars["PROJECT_ID"]
+    #GC_PROJECT_ID = env_vars["PROJECT_ID"]
+    _, GC_PROJECT_ID = ga_default()
     GC_ENV = env_vars["ENVIRONMENT"]
     
     ms_cfg = config["MARKET_STACK_METADATA"]
