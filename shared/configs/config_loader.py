@@ -13,14 +13,14 @@ from google.cloud import secretmanager as gc_secretmanager
 
 
 def get_secret(secret_name):
+    decode_type = "UTF-8"
     #project_id = os_getenv("PROJECT_ID")
+    global project_id
     _, project_id = ga_default()
-    global GC_PROJECT_ID
-    GC_PROJECT_ID = project_id
     client = gc_secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})
-    return response.payload.data.decode("UTF-8")
+    return project_id, response.payload.data.decode(decode_type)
 
 def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     BASE_DIR = Path(__file__).resolve().parent
@@ -32,13 +32,16 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
     
     env_vars = {
         "ENVIRONMENT": os_getenv("ENVIRONMENT"),
+        "PROJECT_ID": "",
+        "GOOGLE_CLOUD_PROJECT": "",
         "API_KEY": ""
         #,
         #"PROJECT_ID": os_getenv("PROJECT_ID"),
         #"GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")'''
     }
     
-    env_vars["API_KEY"] = get_secret("MS_V2_API_KEY")
+    env_vars["PROJECT_ID"], env_vars["API_KEY"] = get_secret("MS_V2_API_KEY")
+    env_vars["GCP_PROJECT_ID"] = env_vars["PROJECT_ID"]
     #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     #if not env_vars["API_KEY"]:
     #    raise ValueError("Missing Application Default Credentials. Please set up ADC.")
@@ -62,8 +65,7 @@ def main(data_cat="dividends"):
     config, env_vars = load_config()
     
     # Set variables based on config and environment variables
-    #GC_PROJECT_ID = env_vars["PROJECT_ID"]
-    _, GC_PROJECT_ID = ga_default()
+    GC_PROJECT_ID = env_vars["PROJECT_ID"]
     GC_ENV = env_vars["ENVIRONMENT"]
     MS_V2_API_KEY = env_vars["API_KEY"]
     
