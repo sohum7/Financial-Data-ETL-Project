@@ -37,12 +37,10 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
         #"GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")'''
     }
     
-    try:
-        env_vars["API_KEY"] = get_secret("MS_V2_API_KEY")
-    except ga_DefaultCredentialsError:
-        print("Could not find Application Default Credentials. Please set up ADC.")
-    #if not env_vars["PROJECT_ID"] and not env_vars["GOOGLE_CLOUD_PROJECT"]:
+    env_vars["API_KEY"] = get_secret("MS_V2_API_KEY")
     #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
+    #if not env_vars["API_KEY"]:
+    #    raise ValueError("Missing Application Default Credentials. Please set up ADC.")
     if not env_vars["ENVIRONMENT"]:
         raise ValueError("missing required environment variable: ENVIRONMENT")
     
