@@ -16,6 +16,7 @@ from shared.configs.config_loader import MS_CAT, MS_CAT_URL, MS_SYMBOLS_LST, MS_
 from shared.misc.utilities import http_return, getCurWkDtRange
 
 
+
 def run_pipeline(data_cat):
     if data_cat not in MS_DATA_CTGYS_LST:
         raise Exception(f"{data_cat} is not an approved")
