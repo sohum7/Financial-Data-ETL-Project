@@ -115,4 +115,4 @@ def run_pipeline(data_cat):
 
 
 if __name__ == "__main__":
-    run_pipeline('')
+    run_pipeline('dividends')

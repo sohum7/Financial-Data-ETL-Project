@@ -8,9 +8,9 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system deps only if needed (kept separate for caching)
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential \
-    && rm -rf /var/lib/apt/lists/*
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends build-essential \
+#    && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency file first (so Docker caches pip install)
 COPY requirements.txt .
