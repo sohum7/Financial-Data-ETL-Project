@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from os import getenv as os_getenv
 from pathlib import Path
 from google.auth import default as ga_default
-from google.auth.exceptions import ga_DefaultCredentialsError
+from google.auth.exceptions import DefaultCredentialsError as ga_DefaultCredentialsError
 from google.cloud import secretmanager as gc_secretmanager
 
 
