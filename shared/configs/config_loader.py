@@ -40,7 +40,7 @@ def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
         #"GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")'''
     }
     
-    env_vars["PROJECT_ID"], env_vars["API_KEY"] = get_secret("MS_V2_API_KEY")
+    env_vars["PROJECT_ID"], env_vars["API_KEY"] = get_secret("MARKET_STACK_V2_API_KEY")
     env_vars["GCP_PROJECT_ID"] = env_vars["PROJECT_ID"]
     #    raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     #if not env_vars["API_KEY"]:
