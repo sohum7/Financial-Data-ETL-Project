@@ -10,7 +10,7 @@ from pathlib import Path
 from shared.clients.gcp_services import get_secret
 
 
-def load_config():
+def load_config() -> :
     BASE_DIR = Path(__file__).resolve().parent
     
     load_dotenv()
@@ -19,15 +19,15 @@ def load_config():
     config.read(BASE_DIR / "config.ini") # Load base first
     
     env_vars = {
-        "ENVIRONMENT": os_getenv("ENVIRONMENT", ""),
-        "BUCKET_SUFFIX": os_getenv("BUCKET_SUFFIX", ""),
-        "PROJECT_ID": os_getenv("PROJECT_ID", "")
+        "ENVIRONMENT": os_getenv("ENVIRONMENT"),
+        "PROJECT_ID": os_getenv("PROJECT_ID"),
+        "GOOGLE_CLOUD_PROJECT": os_getenv("GOOGLE_CLOUD_PROJECT")
     }
     
-    if not env_vars["PROJECT_ID"]:
-        raise ValueError("missing required environment variable: PROJECT_ID")
+    if not env_vars["PROJECT_ID"] and not env_vars["GOOGLE_CLOUD_PROJECT"]:
+        raise ValueError("missing required environment variable: GOOGLE_CLOUD_PROJECT and PROJECT_ID (only one is needed)")
     if not env_vars["ENVIRONMENT"]:
-        raise ValueError("missing required environment variable: ENV")
+        raise ValueError("missing required environment variable: ENVIRONMENT")
     
     return config, env_vars
 
