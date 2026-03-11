@@ -19,9 +19,10 @@ steps:
   args:
     - -c
     - |
-      sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
-      sed -i "s|PROJECT_ID_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
       sed -i "s|ENVIRONMENT_PLACEHOLDER|$_ENV|g" cloudrun.yaml
+      sed -i "s|PROJECT_ID_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
+      sed -i "s|GOOGLE_CLOUD_PROJECT_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
+      sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
   waitFor: ['-']  # can run in parallel with build
 
 # 3️⃣ Push image (waits for build)
@@ -69,8 +70,9 @@ options:
   logging: CLOUD_LOGGING_ONLY
   machineType: E2_HIGHCPU_8
 
-substitutions:
-  _REPO_NAME: financial-data-etl-project
-  _IMAGE_NAME: ms-etl
-  _REGION: us-central1
-  _ENV: dev
+# Within the trigger settings already
+#substitutions:
+#  _REPO_NAME: financial-data-etl-project
+#  _IMAGE_NAME: ms-etl
+#  _REGION: us-central1
+#  _ENV: dev

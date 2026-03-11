@@ -25,4 +25,4 @@ spec:
                   cpu: "1"
                   memory: "512Mi"
           timeoutSeconds: 1800
-          maxRetries: 3
+          maxRetries: 1
