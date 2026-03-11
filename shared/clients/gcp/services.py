@@ -13,7 +13,7 @@ from shared.clients.gcp.naming_conv import MS_FILE_NM, GCS_BUCKET_PATH,GCS_BLOB_
 
 
 def get_secret(secret_name):
-    project_id = os_getenv("GOOGLE_CLOUD_PROJECT")
+    project_id = os_getenv("PROJECT_ID")
     client = gc_secretmanager.SecretManagerServiceClient()
     name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
     response = client.access_secret_version(request={"name": name})

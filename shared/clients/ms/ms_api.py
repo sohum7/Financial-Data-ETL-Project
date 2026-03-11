@@ -9,15 +9,11 @@ from requests.exceptions import HTTPError, RequestException
 # Shared Imports
 from shared.clients.gcp.logging import GCPLogger
 from shared.misc.utilities import http_return
-from shared.configs.config_loader import MS_V2_API_KEY, MS_BASE_URL
+from shared.configs.config_loader import MS_V2_API_KEY,  MS_CAT_URL
 
 
-def ms_api_request(data_cat: str, symbols_lst_str: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
-    supported_data_cats = ["dividends"]
-    
-    if data_cat not in supported_data_cats:
-        raise ValueError(f"Unsupported data category: {data_cat}. Supported categories are: {supported_data_cats}")
-    
+def ms_api_request(data_cat_url: str, symbols_lst_str: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
+    # Chck if valid url    
     max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst_str))  # Default to 5 rows per symbol if not provided
     req_limit = kwargs.get("limit", max_req_rows)
     sort_type = kwargs.get("sort", "ASC")
@@ -32,7 +28,8 @@ def ms_api_request(data_cat: str, symbols_lst_str: str, batch_dt: str, start_dt:
         "sort": sort_type
     }
     
-    full_url = ms_url_constructor(MS_BASE_URL, data_cat)
+    #full_url = ms_url_constructor(MS_BASE_URL, data_cat)
+    full_url = MS_CAT_URL
     logger.info(f"Constructed API URL: {full_url} w/ params: {req_params}")
     
     msg = ""
