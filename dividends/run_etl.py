@@ -11,6 +11,7 @@ from etl.load.loader import load as load_run
 from shared.clients.gcp.logging import GCPLogger
 from shared.clients.gcp.services import write_json_to_gcs, write_df_to_gcs
 from shared.clients.gcp.naming_conv import DF_SAVE_PATH, MS_FILE_NM
+from shared.configs.config_loader import main
 from shared.configs.config_loader import MS_CAT, MS_SYMBOLS_LST, MS_DATA_CTGYS_LST, MS_TGT_DATASET_NM, MS_TGT_TBL_NM, MS_STG_DATASET_NM, MS_STG_TBL_NM, MS_RAW_FILE_BUCKET_NM,  MS_RAW_FILE_BUCKET_DIR, MS_RAW_FILE_TYPE, MS_TFD_FILE_BUCKET_NM,  MS_TFD_FILE_BUCKET_DIR, MS_TFD_FILE_TYPE
 from shared.misc.utilities import http_return, getCurWkDtRange
 
@@ -114,4 +115,4 @@ def run_pipeline(data_cat):
 
 
 if __name__ == "__main__":
-    run_pipeline()
+    run_pipeline('')
