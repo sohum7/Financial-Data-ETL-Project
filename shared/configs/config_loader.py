@@ -70,7 +70,7 @@ def main(data_cat="dividends"):
     MS_SYMBOLS_LST = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
     MS_DATA_CTGYS_LST = [data_cat.strip() for data_cat in ms_cfg["data_ctgys"].split(",")]
     MS_BASE_URL = ms_cfg["base_url"]
-    MS_CAT_URL = f"{MS_BASE_URL}{'' if MS_BASE_URL.endswith('/') else '/'}{ms_cat_cfg.lower()}"
+    MS_CAT_URL = f"{MS_BASE_URL}{'' if MS_BASE_URL.endswith('/') else '/'}{MS_CAT.lower()}"
     
     MS_V2_API_KEY = get_secret("MS_V2_API_KEY")
     
