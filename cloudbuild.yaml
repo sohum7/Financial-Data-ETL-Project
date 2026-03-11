@@ -21,7 +21,6 @@ steps:
     - |
       sed -i "s|ENVIRONMENT_PLACEHOLDER|$_ENV|g" cloudrun.yaml
       sed -i "s|PROJECT_ID_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
-      sed -i "s|GOOGLE_CLOUD_PROJECT_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
       sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
   waitFor: ['-']  # can run in parallel with build
 

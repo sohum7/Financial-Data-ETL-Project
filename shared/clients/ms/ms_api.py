@@ -49,7 +49,7 @@ def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_
         msg = f"FAILED: API extraction - an unexpected error occurred: {e}"
     else:
         # Extraction from Marketstack API succeeded
-        msg = f"SUCCESS: Data extracted from Marketstack API and JSON decoded successfully for....\n{data_cat.upper()}\nbatch date: {batch_dt}\nstart date: {start_dt}\nend date: {end_dt}"
+        msg = f"SUCCESS: Data extracted from Marketstack API and JSON decoded successfully from....\n{data_cat_url}\nbatch date: {batch_dt}\nstart date: {start_dt}\nend date: {end_dt}"
         logger.info(msg)
         return resp_json
     

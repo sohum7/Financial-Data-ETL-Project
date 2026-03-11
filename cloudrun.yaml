@@ -14,8 +14,6 @@ spec:
               command: ["python"]
               args: ["dividends/run_etl.py"]
               env:
-                - name: GOOGLE_CLOUD_PROJECT
-                  value: PROJECT_ID_PLACEHOLDER
                 - name: PROJECT_ID
                   value: PROJECT_ID_PLACEHOLDER
                 - name: ENVIRONMENT
