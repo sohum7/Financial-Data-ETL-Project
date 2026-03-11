@@ -10,6 +10,7 @@ from google.cloud import secretmanager as gc_secretmanager
 from google.cloud import storage as gc_storage
 from pyspark.sql import SparkSession
 from shared.clients.gcp.naming_conv import MS_FILE_NM, GCS_BUCKET_PATH,GCS_BLOB_PATH, DF_SAVE_PATH
+from shared.configs.config_loader import GC_PROJECT_ID
 
 
 def get_secret(secret_name):
