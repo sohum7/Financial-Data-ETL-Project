@@ -12,7 +12,7 @@ from shared.clients.gcp.logging import GCPLogger
 from shared.clients.gcp.services import write_json_to_gcs, write_df_to_gcs
 from shared.clients.gcp.naming_conv import DF_SAVE_PATH, MS_FILE_NM
 from shared.configs.config_loader import main
-from shared.configs.config_loader import MS_CAT, MS_CAT_URL, MS_SYMBOLS_LST, MS_DATA_CTGYS_LST, MS_TGT_DATASET_NM, MS_TGT_TBL_NM, MS_STG_DATASET_NM, MS_STG_TBL_NM, MS_RAW_FILE_BUCKET_NM,  MS_RAW_FILE_BUCKET_DIR, MS_RAW_FILE_TYPE, MS_TFD_FILE_BUCKET_NM,  MS_TFD_FILE_BUCKET_DIR, MS_TFD_FILE_TYPE
+from shared.configs.config_loader import MS_CAT, MS_CAT_URL, MS_SYMBOLS_LST, MS_DATA_CTGYS_LST, MS_V2_API_KEY, MS_TGT_DATASET_NM, MS_TGT_TBL_NM, MS_STG_DATASET_NM, MS_STG_TBL_NM, MS_RAW_FILE_BUCKET_NM,  MS_RAW_FILE_BUCKET_DIR, MS_RAW_FILE_TYPE, MS_TFD_FILE_BUCKET_NM,  MS_TFD_FILE_BUCKET_DIR, MS_TFD_FILE_TYPE
 from shared.misc.utilities import http_return, getCurWkDtRange
 
 
@@ -51,7 +51,7 @@ def run_pipeline(data_cat):
     
     with GCPLogger() as gcp_logger:
         gcp_logger.info("Starting extraction process...")
-        raw_json = extract_run(MS_CAT, symbols_lst_str, batch_dt, start_dt, end_dt, logger=gcp_logger)
+        raw_json = extract_run(MS_CAT_URL, symbols_lst_str, MS_V2_API_KEY, batch_dt, start_dt, end_dt, logger=gcp_logger)
         
         if raw_json is None:
             gcp_logger.error("Extraction failed. No data returned from API.")

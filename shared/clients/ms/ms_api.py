@@ -9,10 +9,9 @@ from requests.exceptions import HTTPError, RequestException
 # Shared Imports
 from shared.clients.gcp.logging import GCPLogger
 from shared.misc.utilities import http_return
-from shared.configs.config_loader import MS_V2_API_KEY,  MS_CAT_URL
 
 
-def ms_api_request(data_cat_url: str, symbols_lst_str: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
+def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
     # Chck if valid url    
     max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst_str))  # Default to 5 rows per symbol if not provided
     req_limit = kwargs.get("limit", max_req_rows)
@@ -20,7 +19,7 @@ def ms_api_request(data_cat_url: str, symbols_lst_str: str, batch_dt: str, start
     
     # API request parameters for Marketstack
     req_params = {
-        "access_key": MS_V2_API_KEY,
+        "access_key": api_key,
         "symbols": symbols_lst_str,
         "limit": req_limit,
         "date_from": start_dt,
