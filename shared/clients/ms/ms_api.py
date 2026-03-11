@@ -27,8 +27,7 @@ def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_
         "sort": sort_type
     }
     
-    #full_url = ms_url_constructor(MS_BASE_URL, data_cat)
-    full_url = MS_CAT_URL
+    full_url = data_cat_url
     logger.info(f"Constructed API URL: {full_url} w/ params: {req_params}")
     
     msg = ""
