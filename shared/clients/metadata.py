@@ -17,7 +17,7 @@ import pytz
 
 # Shared imports
 from google.cloud import bigquery as bq
-from shared.clients.gcp_logging import GCPLogger
+from shared.clients.gcp.logging import GCPLogger
 
 
 def metadata(data_cat, dataset_nm, batch_dt, start_dt, end_dt, logger: GCPLogger, **kwargs):

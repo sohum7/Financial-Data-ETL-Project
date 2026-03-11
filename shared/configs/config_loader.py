@@ -7,10 +7,10 @@ from configparser import ConfigParser
 from dotenv import load_dotenv
 from os import getenv as os_getenv
 from pathlib import Path
-from shared.clients.gcp_services import get_secret
+from shared.clients.gcp.services import get_secret
 
 
-def load_config() -> tuple[ ConfigParser, dict[ str, str| None]]:
+def load_config(dat_cat) -> tuple[ ConfigParser, dict[ str, str| None]]:
     BASE_DIR = Path(__file__).resolve().parent
     
     load_dotenv()
@@ -47,10 +47,14 @@ gc_project = env_vars["PROJECT_ID"]
 gc_env = env_vars["ENVIRONMENT"]
 
 ms_cfg = config["MARKET_STACK_METADATA"]
-ms_cat_cfg = config["MARKET_STACK_DIVIDENDS_METADATA"]
+lambda data_cat: F"MARKET_STACK_{data_cat.upper()}_METADATA"
+ms_cat_cfg = config["MARKET_STACK_{}_METADATA"]
 
+MS_CAT = ms_cat_cfg["name"]
 MS_SYMBOLS_LST = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
 MS_BASE_URL = ms_cfg["base_url"]
+MS_CAT_URL = None
+MS_V2_API_KEY = get_secret("MS_V2_API_KEY")
 
 MS_CAT = ms_cat_cfg["name"]
 MS_V2_API_KEY = get_secret("MS_V2_API_KEY")

@@ -1,7 +1,7 @@
 # 
 
 # Shared imports
-from shared.clients.ms_api import ms_api_request
+from shared.clients.ms.ms_api import ms_api_request
 
 
 def extract(data_cat, symbols_lst_str: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):

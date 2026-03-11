@@ -7,9 +7,11 @@ from requests import get as requests_get
 from requests.exceptions import HTTPError, RequestException
 
 # Shared Imports
-from shared.clients.gcp_logging import GCPLogger
+from shared.clients.gcp.logging import GCPLogger
 from shared.misc.utilities import http_return
 from shared.configs.config_loader import MS_V2_API_KEY, MS_BASE_URL
+
+valid_data_catgys = lambda x : match(x)
 
 
 def ms_api_request(data_cat: str, symbols_lst_str: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):

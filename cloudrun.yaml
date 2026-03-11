@@ -18,6 +18,8 @@ spec:
                   value: PROJECT_ID_PLACEHOLDER
                 - name: PROJECT_ID
                   value: PROJECT_ID_PLACEHOLDER
+                - name: ENVIRONMENT
+                  value: ENVIRONMENT_PLACEHOLDER
               resources:
                 limits:
                   cpu: "1"

@@ -2,7 +2,7 @@
 
 # Shared imports
 from google.cloud import bigquery as gc_bigquery
-from shared.clients.gcp_gcs_naming import MS_FILE_NM, GCS_DIR_PATH, DF_SAVE_PATH
+from shared.clients.gcp.naming_conv import MS_FILE_NM, GCS_DIR_PATH, DF_SAVE_PATH
 from shared.misc.utilities import http_return
 
 
