@@ -22,7 +22,7 @@ spec:
                   value: ENVIRONMENT_PLACEHOLDER
               resources:
                 limits:
-                  cpu: "1"
+                  cpu: "2"
                   memory: "512Mi"
           timeoutSeconds: 1800
           maxRetries: 1

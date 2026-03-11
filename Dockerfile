@@ -1,17 +1,29 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
-# Create and move into the /app folder
+# Prevent python from writing pyc files and buffering stdout
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Create working directory
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install system deps only if needed (kept separate for caching)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of your code
+# Copy dependency file first (so Docker caches pip install)
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copy application code (this invalidates cache only when code changes)
 COPY . .
 
-# Set the path so Python finds your 'shared' folder
-ENV PYTHONPATH="."
+# Ensure Python can see shared modules
+ENV PYTHONPATH=/app
 
-# Run the ETL script
+# Run ETL
 CMD ["python", "-m", "dividends.run_etl"]
