@@ -1,8 +1,8 @@
-.vscode/
-.env
-*.env
+#.vscode/
+#.env
+#*.env
 .venv/
 __pycache__/
-*.pyc
-spark-3.5.0-bin-hadoop3-scala2.13
-scripts
+#*.pyc
+#spark-3.5.0-bin-hadoop3-scala2.13
+#scripts
