@@ -8,7 +8,7 @@ from http import HTTPStatus
 # Shared imports
 from etl.extract.extractor import extract as extract_run
 from etl.transform.transformer import transform as transform_run
-from etl.load.loader import load_df as load_df_run, load_uri as load_uri_run
+from etl.load.loader import load as load_run
 from etl.load.merger import merge as merge_run
 from shared.clients.gcp.logging import GCPLogger
 from shared.clients.gcp.services import check_blob_exists, read_json_gcs, write_json_gcs, read_parquet_gcs, write_parquet_gcs, convert_dict_pandas_df
@@ -142,7 +142,7 @@ def run_pipeline(data_cat, full_refresh=False):
         tgt_ds_tbl = f"{MS_TGT_DATASET_NM}.{MS_TGT_TBL_NM}"
         stg_ds_tbl = f"{MS_STG_DATASET_NM}.{MS_STG_TBL_NM}"
         
-        lr_res = load_df_run(tfd_df, tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
+        lr_res = load_run(tfd_df, tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
         
         if not lr_res:
             err_msg = f"Load to {stg_ds_tbl} failed."

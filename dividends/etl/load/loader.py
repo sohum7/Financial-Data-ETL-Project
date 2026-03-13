@@ -2,14 +2,22 @@
 
 # Builtin imports
 import logging
+from pandas import DataFrame as pd_DataFrame
 
 # Shared imports
 from google.api_core.exceptions import Conflict
 from google.cloud import bigquery as gc_bigquery
 from shared.clients.gcp.naming_conv import GCSPathLib
 
+def load(df_or_uri, tgt_ds_tbl, stg_ds_tbl, logger):
+    if isinstance(df_or_uri, pd_DataFrame):
+        logger.info("Passing a pandas DataFrame to load function")
+        load_main(df_or_uri, load_df_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
+    elif isinstance(df_or_uri, str):
+        logger.info(f"Passing a uri to load function: {df_or_uri}")
+        load_main(df_or_uri, load_uri_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
 
-def load_df(df, tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
+def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger):
     try:
         bq_client = gc_bigquery.Client()
         bq_client.load_table_from_dataframe
@@ -20,7 +28,7 @@ def load_df(df, tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
             err_msg = f"Error creating {stg_ds_tbl} staging table: {create_stg_tbl_job.error_result}"
             raise Conflict(err_msg)
         
-        load_to_stg_tbl_job = load_df_to_stg_tbl(bq_client, df, stg_ds_tbl)
+        load_to_stg_tbl_job = load_stg_tbl_func(bq_client, df_or_uri, stg_ds_tbl)
         if load_to_stg_tbl_job is None or load_to_stg_tbl_job.errors:
             err_msg = f"Error loading data to {stg_ds_tbl} staging table{'.' if not load_to_stg_tbl_job else f': {load_to_stg_tbl_job.errors}'}"
             raise Conflict(err_msg)
@@ -34,9 +42,6 @@ def load_df(df, tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
         return True
     
     return False
-
-def load_uri(uri, tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
-    pass
 
 def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
     if "." not in tgt_ds_tbl or "." not in stg_ds_tbl: logging.error(f"create_stg_tbl was not provided tgt_ds_tbl and stg_ds_tbl parameter's with dataset and table names as such 'ds_nm.tbl_nm' ")

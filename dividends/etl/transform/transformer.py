@@ -4,7 +4,9 @@
 import pandas as pd
 import logging
 
-def transform(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+from shared.clients.gcp.logging import GCPLogger
+
+def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFrame:
     """
     Transform a nested JSON dataframe using pandas.
     """
@@ -24,9 +26,9 @@ def transform(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     df = df.rename(columns={
         "dividend": "dividend_ratio",
         "date": "market_dt",
-        "payment_date": "pay_dt",
+        "payment_date": "payment_dt",
         "record_date": "record_dt",
-        "declaration_date": "decl_dt"
+        "declaration_date": "declar_dt"
     })
 
     # -----------------------
@@ -38,21 +40,20 @@ def transform(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     # 4. Fill missing values for non-essential columns
     # -----------------------
     df['distr_freq'] = df.get('distr_freq', pd.Series()).fillna('Unknown')
-    df['payment_dt'] = df.get('payment_dt', pd.Series()).fillna(pd.NaT)
-    df['record_dt'] = df.get('record_dt', pd.Series()).fillna(pd.NaT)
-    df['declar_dt'] = df.get('declar_dt', pd.Series()).fillna(pd.NaT)
+    #df['payment_dt'] = df.get('payment_dt', pd.Series()).fillna(pd.NaT)
+    #df['record_dt'] = df.get('record_dt', pd.Series()).fillna(pd.NaT)
+    #df['declar_dt'] = df.get('declar_dt', pd.Series()).fillna(pd.NaT)
 
     # -----------------------
     # 5. Convert date columns to datetime.date (remove time component)
     # -----------------------
+    
+    #df['datetime_col'] = pd.to_datetime(df['datetime_col']) # Convert to datetime objects
+    
     date_cols = ['market_dt', 'payment_dt', 'record_dt', 'declar_dt']
     for col_name in date_cols:
         if col_name in df.columns:
-            df[col_name] = pd.to_datetime(df[col_name], errors='coerce')
-            if pd.api.types.is_datetime64_any_dtype(df[col_name]):
-                df[col_name] = df[col_name].dt.date
-            else:
-                df[col_name] = df[col_name].apply(lambda x: x.date() if pd.notnull(x) and hasattr(x, 'date') else pd.NaT)
+            df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.date
 
     # -----------------------
     # 6. Reorder columns
