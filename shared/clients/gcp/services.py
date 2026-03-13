@@ -1,8 +1,7 @@
 # GCP services client wrapper to interact with various GCP services like Secret Manager, Cloud Storage, and Dataproc
 
-# Builtin imports
+# Built-in imports
 from io import BytesIO
-import json
 from json import dumps as json_dumps, loads as json_loads, JSONDecodeError
 from natsort import natsort_keygen, ns
 import logging
@@ -10,9 +9,12 @@ import pandas as pd
 from typing import Sequence, Hashable
 
 # Shared imports
+from shared.clients.gcp.naming_conv import GCSPathLib
+
+# Google API imports
 from google.api_core.exceptions import NotFound, Forbidden
 from google.cloud import storage as gc_storage
-from shared.clients.gcp.naming_conv import GCSPathLib
+
 
 # Get ....
 def get_blob_resources(bucket_nm, blob_nm):
@@ -113,4 +115,5 @@ def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_
 
 # Convert python dictionary to a pandas DataFrame
 def convert_dict_pandas_df(data: dict):
-    return pd.DataFrame(data)
+    return pd.json_normalize(data)
+    #return pd.DataFrame(data)

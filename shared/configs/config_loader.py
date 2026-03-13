@@ -2,11 +2,13 @@
 # Configuration file for data extractionm transformation, loading, and storage parameters for Market Stack data. 
 # This file defines constants for API keys, URLs, file formats, and GCS bucket details used across the ETL pipeline.
 
-# Builtin imports
+# Built-in imports
 from configparser import ConfigParser
 from dotenv import load_dotenv
 from os import getenv as os_getenv
 from pathlib import Path
+
+# Google API imports
 from google.auth import default as ga_default
 from google.auth.exceptions import DefaultCredentialsError as ga_DefaultCredentialsError
 from google.cloud import secretmanager as gc_secretmanager

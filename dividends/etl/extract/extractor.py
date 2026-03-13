@@ -1,6 +1,7 @@
 # 
 
 # Shared imports
+from shared.clients.gcp.logging import GCPLogger
 from shared.clients.ms.ms_api import ms_api_request
 
 

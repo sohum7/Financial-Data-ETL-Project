@@ -1,15 +1,17 @@
 # Run ETL Pipeline
 
-# Builtin imports
+# Built-in imports
 from datetime import datetime
 import hashlib
 from http import HTTPStatus
 
-# Shared imports
+# ETL imports
 from etl.extract.extractor import extract as extract_run
 from etl.transform.transformer import transform as transform_run
 from etl.load.loader import load as load_run
 from etl.load.merger import merge as merge_run
+
+# Shared imports
 from shared.clients.gcp.logging import GCPLogger
 from shared.clients.gcp.services import check_blob_exists, read_json_gcs, write_json_gcs, read_parquet_gcs, write_parquet_gcs, convert_dict_pandas_df
 from shared.clients.gcp.naming_conv import MS_FILE_NM, GCSPathLib

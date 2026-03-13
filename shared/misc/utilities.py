@@ -1,6 +1,6 @@
 # Utility functions for the dividends ETL pipeline, including date range calculations and standardized HTTP response formatting.
 
-# Builtin imports
+# Built-in imports
 from datetime import datetime, date, timedelta
 
 def get_past_week_range(reference_date: date | None=None):

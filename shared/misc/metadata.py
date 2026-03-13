@@ -11,13 +11,15 @@
 ## start_time (timestamp when the batch started)
 ## end_time (timestamp when the batch ended)
 
-# Builtin imports
+# Built-in imports
 from datetime import datetime
 import pytz
 
 # Shared imports
-from google.cloud import bigquery as bq
 from shared.clients.gcp.logging import GCPLogger
+
+# Google API imports
+from google.cloud import bigquery as bq
 
 
 def metadata(data_cat, dataset_nm, batch_dt, start_dt, end_dt, logger: GCPLogger, **kwargs):

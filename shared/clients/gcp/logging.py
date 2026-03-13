@@ -1,9 +1,9 @@
 # GCP Logging client wrapper to integrate with Python's logging module and send logs to Google Cloud Logging
 
-# Builtin imports
+# Built-in imports
 import logging
 
-# Shared imports
+# Google API imports
 from google.cloud import logging as gc_logging
 
 class GCPLogger:

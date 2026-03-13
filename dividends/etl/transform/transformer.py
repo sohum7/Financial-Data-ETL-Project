@@ -1,9 +1,10 @@
 # Main transform logic for various data categories to GCS
 
-# Builtin imports
+# Built-in imports
 import pandas as pd
 import logging
 
+# Shared imports
 from shared.clients.gcp.logging import GCPLogger
 
 def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFrame:

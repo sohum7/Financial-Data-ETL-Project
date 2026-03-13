@@ -1,15 +1,17 @@
 # Main load logic for various data categories to BigQuery
 
-# Builtin imports
-import logging
+# Built-in imports
 from pandas import DataFrame as pd_DataFrame
 
 # Shared imports
-from google.api_core.exceptions import Conflict
-from google.cloud import bigquery as gc_bigquery
+from shared.clients.gcp.logging import GCPLogger
 from shared.clients.gcp.naming_conv import GCSPathLib
 
-def load(df_or_uri, tgt_ds_tbl, stg_ds_tbl, logger):
+# Google API imports
+from google.api_core.exceptions import Conflict
+from google.cloud import bigquery as gc_bigquery
+
+def load(df_or_uri, tgt_ds_tbl, stg_ds_tbl, logger: GCPLogger):
     if isinstance(df_or_uri, pd_DataFrame):
         logger.info("Passing a pandas DataFrame to load function")
         load_main(df_or_uri, load_df_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
@@ -17,7 +19,7 @@ def load(df_or_uri, tgt_ds_tbl, stg_ds_tbl, logger):
         logger.info(f"Passing a uri to load function: {df_or_uri}")
         load_main(df_or_uri, load_uri_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
 
-def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger):
+def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPLogger):
     try:
         bq_client = gc_bigquery.Client()
         bq_client.load_table_from_dataframe

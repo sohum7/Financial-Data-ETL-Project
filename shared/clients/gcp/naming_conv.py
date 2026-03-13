@@ -1,5 +1,6 @@
 # GCS naming conventions for files and paths used in the project
-# Builtin imports
+
+# Built-in imports
 from dataclasses import dataclass
 
 # GCS file naming convention

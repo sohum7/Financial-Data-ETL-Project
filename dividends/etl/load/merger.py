@@ -1,13 +1,14 @@
-#
+# 
 
-# Builtin imports
-from typing import Sequence, Hashable
 # Shared imports
-from google.cloud import bigquery as gc_bigquery
+from shared.clients.gcp.logging import GCPLogger
 from shared.misc.utilities import http_return
 
+# Google API imports
+from google.cloud import bigquery as gc_bigquery
 
-def merge(tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
+
+def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger):
     try:
         bq_client = gc_bigquery.Client()
         

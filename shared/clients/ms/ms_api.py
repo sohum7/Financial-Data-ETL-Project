@@ -1,14 +1,13 @@
 # Main extractor logic for various data categories
 
-# Builtin Imports
+# Built-in imports
 from datetime import datetime
 from json import JSONDecodeError
 from requests import get as requests_get
 from requests.exceptions import HTTPError, RequestException
 
 # Shared Imports
-from shared.clients.gcp.logging import GCPLogger
-from shared.misc.utilities import http_return
+#from shared.clients.gcp.logging import GCPLogger
 
 
 def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
