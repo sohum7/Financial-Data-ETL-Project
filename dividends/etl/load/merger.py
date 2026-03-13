@@ -1,9 +1,13 @@
+#
+
+# Builtin imports
+from typing import Sequence, Hashable
 # Shared imports
 from google.cloud import bigquery as gc_bigquery
 from shared.misc.utilities import http_return
 
 
-def merge(data_cat, bucket_dir, tgt_ds_tbl, stg_ds_tbl, tfd_file_type, logger, **kwargs):
+def merge(bucket_dir, tgt_ds_tbl, stg_ds_tbl, tfd_file_type, logger, **kwargs):
     try:
         bq_client = gc_bigquery.Client()
         
@@ -23,7 +27,14 @@ def merge(data_cat, bucket_dir, tgt_ds_tbl, stg_ds_tbl, tfd_file_type, logger, *
         logger.error(msg)
         return http_return(500, msg)
 
-def create_dividends_tgt_tbl(bq_client, ds_tbl):
+def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, partition_col: str | None = "", *cluster_cols: str):
+    optional_clause = ""
+    if partition_col is not None:
+        partition_col.strip()
+        optional_clause = f"PARTITIONED BY {partition_col.strip()}"
+    if not cluster_cols:
+        cluster_cols_str = ", ".join( col.strip() for col in cluster_cols )
+        optional_clause += f"CLUSTER BY ({cluster_cols_str})"
     create_tbl_query = \
         f"""
             CREATE TABLE IF NOT EXISTS {ds_tbl} (
@@ -35,7 +46,7 @@ def create_dividends_tgt_tbl(bq_client, ds_tbl):
                 record_dt DATE,
                 declar_dt DATE
             )  
-            PARTITIONED BY (market_dt)  CLUSTERED BY (symbol, market_dt)
+            {optional_clause}
         """
     
     create_tbl_query_job = bq_client.query(create_tbl_query)
@@ -48,7 +59,7 @@ def merge_stg_to_tgt_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
         f"""
             MERGE INTO {tgt_ds_tbl} AS target
             USING      {stg_ds_tbl} AS staging
-            ON   target.symbol = staging.symbol 
+            ON   target.symbol    = staging.symbol 
             AND  target.market_dt = staging.market_dt
             WHEN MATCHED     THEN UPDATE SET *
             WHEN NOT MATCHED THEN INSERT *

@@ -1,45 +1,47 @@
 # Main load logic for various data categories to BigQuery
 
+# Builtin imports
+import logging
+
 # Shared imports
+from google.api_core.exceptions import Conflict
 from google.cloud import bigquery as gc_bigquery
-from shared.clients.gcp.naming_conv import MS_FILE_NM, GCS_DIR_PATH, DF_SAVE_PATH
-from shared.misc.utilities import http_return
+from shared.clients.gcp.naming_conv import GCSPathLib
 
 
-def load(data_cat, bucket_dir, tgt_ds_tbl, stg_ds_tbl, tfd_file_type, logger, **kwargs):
-    bq_client = gc_bigquery.Client()
-    
+def load(df, tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
     try:
         bq_client = gc_bigquery.Client()
+        bq_client.load_table_from_dataframe
         
         # Create or replace staging table
         create_stg_tbl_job = create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
         if create_stg_tbl_job.error_result:
-            msg = f"Error creating {data_cat.upper()}'s BQ staging table: {create_stg_tbl_job.error_result}"
-            logger.error(msg)
-            return http_return(500, msg)
+            err_msg = f"Error creating {stg_ds_tbl} staging table: {create_stg_tbl_job.error_result}"
+            raise Conflict(err_msg)
         
-        #gcs_file_path = GCS_FILE_PATH(batch_dt, bucket_nm, bucket_dir_path, f"{file_nm}*.parquet")  # Load all parquet files for this batch into the staging table
-        load_to_stg_tbl_job = load_to_stg_tbl(bq_client, bucket_dir, stg_ds_tbl, tfd_file_type)
-        if load_to_stg_tbl_job.errors:
-            msg = f"Error loading data to {data_cat.upper()}'s BQ staging table: {load_to_stg_tbl_job.errors}"
-            logger.error(msg)
-            return http_return(500, msg)
-    
+        load_to_stg_tbl_job = load_to_stg_tbl(bq_client, df, stg_ds_tbl)
+        if load_to_stg_tbl_job is None or load_to_stg_tbl_job.errors:
+            err_msg = f"Error loading data to {stg_ds_tbl} staging table{'.' if not load_to_stg_tbl_job else f': {load_to_stg_tbl_job.errors}'}"
+            raise Conflict(err_msg)
+        
+    except Conflict as e:
+        logger.error(e.message)
     except Exception as e:
-        msg = f"Error loading data to {data_cat.upper()}'s BQ staging table"
-        logger.error(msg)
-        return http_return(500, msg)
+        logger.error(f"Error loading data to {stg_ds_tbl} staging table: {e}")
+    else:
+        logger.info(f"Loading to {stg_ds_tbl} staging table is complete.")
+        return True
     
-    msg = f"Loading to {data_cat.upper()}'s BQ staging table is complete"
-    logger.info(msg)
-    return http_return(200, msg)
+    return False
 
-def create_stg_tbl(bq_client, tgt_dataset_tbl, stg_dataset_tbl):
+def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
+    if "." not in tgt_ds_tbl or "." not in stg_ds_tbl: logging.error(f"create_stg_tbl was not provided tgt_ds_tbl and stg_ds_tbl parameter's with dataset and table names as such 'ds_nm.tbl_nm' ")
+
     create_tbl_query = \
         f"""
-            CREATE OR REPLACE TABLE {stg_dataset_tbl} 
-            LIKE {tgt_dataset_tbl}
+            CREATE OR REPLACE TABLE {stg_ds_tbl} 
+            LIKE {tgt_ds_tbl}
         """
     
     create_tbl_query_job = bq_client.query(create_tbl_query)
@@ -47,14 +49,33 @@ def create_stg_tbl(bq_client, tgt_dataset_tbl, stg_dataset_tbl):
     
     return create_tbl_query_job
 
-def load_to_stg_tbl(bq_client, bucket_dir, stg_ds_tbl, file_type):
+def load_df_to_stg_tbl(bq_client, df, stg_ds_tbl):
+    if df is None:
+        logging.error(f"df is None")
+        return None
+    if not len(df):
+        logging.error(f"0 records in df")
+    else:
+        job_config = gc_bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
+        
+        load_tbl_query_job = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config)
+        load_tbl_query_job.result()
+    
+    return load_tbl_query_job
+
+def load_uri_to_stg_tbl(bq_client, uri, stg_ds_tbl):
+    if "." not in uri: 
+        logging.error(f"load_to_stg_tbl was not provided file type from uri parameter")
+        return None
+    
+    file_type = uri.split(".")[-1]
     
     load_tbl_query = \
         f"""
             LOAD DATA INTO {stg_ds_tbl}
             FROM FILES (
             format = '{file_type.upper()}',
-            uris = ['{bucket_dir}*.{file_type.lower()}']
+            uris = ['{uri}']
             )
         """
     
@@ -62,5 +83,4 @@ def load_to_stg_tbl(bq_client, bucket_dir, stg_ds_tbl, file_type):
     load_tbl_query_job.result()
     
     return load_tbl_query_job
-
-
+'''

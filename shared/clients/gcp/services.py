@@ -1,57 +1,113 @@
 # GCP services client wrapper to interact with various GCP services like Secret Manager, Cloud Storage, and Dataproc
 
 # Builtin imports
-from json import dumps as json_dumps
-from os import getenv as os_getenv
+from io import BytesIO
+import json
+from json import dumps as json_dumps, loads as json_loads, JSONDecodeError
+from natsort import natsort_keygen, ns
+import logging
+import pandas as pd
+from typing import Sequence, Hashable
 
 # Shared imports
+from google.api_core.exceptions import NotFound, Forbidden
 from google.cloud import storage as gc_storage
-from pyspark.sql import SparkSession
-from shared.clients.gcp.naming_conv import MS_FILE_NM, GCS_BUCKET_PATH, GCS_BLOB_PATH, DF_SAVE_PATH
+from shared.clients.gcp.naming_conv import GCS_PREFIX, GCS_FULL_FILE_PATH_V1
+
+def check_blob_exists(bucket_nm, blob_nm):
+    storage_client = gc_storage.Client()
+    bucket = storage_client.bucket(bucket_nm)
+    blob = bucket.blob(blob_nm)
+
+    if blob.exists():
+        print(f"Blob exists: {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}")
+        return True
+    else:
+        print(f"Blob '{blob_nm}' does not exist in bucket '{bucket_nm}'.")
+        return False
+
+def read_json_gcs(bucket_nm: str, blob_nm: str):
+    try:
+        client = gc_storage.Client()
+        bucket = client.bucket(bucket_nm)
+        blob = bucket.blob(blob_nm)
+
+        content = blob.download_as_text()
+        return json_loads(content)
+
+    except NotFound as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} not found: {e}")
+    except Forbidden as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} is lacking proper IAM roles by user/SA: {e}")
+    except JSONDecodeError as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} could not be decoded as json: {e}")
+    except Exception as e:
+        logging.error(f"Running into issues w/ {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}: {e}")
+    return None
 
 
-def write_json_to_gcs(data, bucket_nm, dir_path, file_nm, batch_dt, start_dt, end_dt) -> None:
+def write_json_gcs(data, bucket_nm: str, blob_nm: str):
     file_type = "json"
-    
-    blob_nm = GCS_BLOB_PATH(dir_path, file_nm, file_type)
-    
-    storage_client = gc_storage.Client()
-    bucket_obj = storage_client.bucket(bucket_nm)
-    blob_obj = bucket_obj.blob(blob_nm)
+    try:
+        client = gc_storage.Client()
+        bucket = client.bucket(bucket_nm)
+        blob = bucket.blob(blob_nm)
 
-    # Upload the JSON data to GCS
-    blob_obj.upload_from_string(json_dumps(data, indent=4), content_type=f"application/{file_type}")
+        blob.upload_from_string(
+            json_dumps(data),
+            content_type=f"application/{file_type}"
+        )
 
-# Read JSON data from GCS using Spark
-"""
-def read_json_from_gcs(data_cat, bucket_nm, dir_path, file_nm, batch_dt, with_spark=False, **kwargs):
-    #TODO FIX THE FILENAME PART
-    if with_spark:
-        with SparkSession.builder.appName(f"read_json_from_gcs_{data_cat.upper()}").getOrCreate() as spark:
-            return spark.read.json(f"........").cache() # read the JSON data from GCS using Spark and return as Spark DataFrame. We will cache the DataFrame since we will be performing multiple transformations on it in the transform step, so caching will help improve performance by avoiding repeated reads from GCS.
-    
-    # else use native GCS client to read the JSON data from GCS and return as dict
-    storage_client = gc_storage.Client()
-    bucket_obj = storage_client.bucket(bucket_nm)
-    return bucket_obj.blob(GCS_BLOB_PATH(batch_dt, dir_nm, file_nm))
-"""
+        return f"{GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}"
+
+    except Forbidden as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} is lacking proper IAM roles by user/SA: {e}")
+    except Exception as e:
+        logging.error(f"Running into issues w/ {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}: {e}")
+    return None
 
 
-# Write the transformed data back to GCS in delta lake format (parquet), partitioned by market_dt and clustered by symbol
-def write_df_to_gcs(df, bucket_nm, dir_path, partition_col, cluster_col, file_type, save_mode):
-    
-    file_path = f"{DF_SAVE_PATH(bucket_nm, dir_path)}"
-    df.write \
-        .format(file_type) \
-        .mode(save_mode) \
-        .save(file_path)
+def read_parquet_gcs(bucket_nm: str, blob_nm: str):
+    read_parq_eng_type = "pyarrow"
+    try:
+        client = gc_storage.Client()
+        bucket = client.bucket(bucket_nm)
+        blob = bucket.blob(blob_nm)
+
+        parquet_bytes = blob.download_as_bytes()
+        buffer = BytesIO(parquet_bytes)
+
+        return pd.read_parquet(buffer, engine=read_parq_eng_type)
+
+    except NotFound as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} not found: {e}")
+    except Forbidden as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} is lacking proper IAM roles by user/SA: {e}")
+    except Exception as e:
+        logging.error(f"Running into issues w/ {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}: {e}")
+    return None
+
+
+def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_cols: Sequence[Hashable] | None = None):
+    save_type = "octet-stream"
+    try:
+        client = gc_storage.Client()
+        bucket = client.bucket(bucket_nm)
+        blob = bucket.blob(blob_nm)
         
-    """
-    df.sortWithinPartitions(cluster_col) \
-        .write \
-        .format(file_type) \
-        .partitionBy(partition_col) \
-        .mode(save_mode) \
-        .save(file_path)
-    """
-    return file_path
+        buffer = BytesIO()
+        df.to_parquet(buffer, index=False, partition_cols=partition_cols)
+        buffer.seek(0)
+
+        blob.upload_from_file(buffer, content_type=f"application/{save_type}")
+        
+        return f"{GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}"
+
+    except Forbidden as e:
+        logging.error(f"Eile at {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)} is lacking proper IAM roles by user/SA: {e}")
+    except Exception as e:
+        logging.error(f"Running into issues w/ {GCS_PREFIX}{GCS_FULL_FILE_PATH_V1(bucket_nm, blob_nm)}: {e}")
+    return None
+
+def convert_dict_pandas_df(data: dict):
+    return pd.DataFrame(data)
