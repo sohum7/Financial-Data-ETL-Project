@@ -7,7 +7,7 @@ from google.cloud import bigquery as gc_bigquery
 from shared.misc.utilities import http_return
 
 
-def merge(bucket_dir, tgt_ds_tbl, stg_ds_tbl, tfd_file_type, logger, **kwargs):
+def merge(tgt_ds_tbl, stg_ds_tbl, logger, **kwargs):
     try:
         bq_client = gc_bigquery.Client()
         

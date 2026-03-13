@@ -40,7 +40,7 @@ loader.py
     input(s):
         df
     output(s):
-        staging table
+        staging table with data from DataFrame
     purpose:
         loads data into staging table
 

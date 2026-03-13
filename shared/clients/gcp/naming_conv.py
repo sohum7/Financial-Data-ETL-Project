@@ -52,7 +52,7 @@ class GCSPathLib:
     def blob_path(self, include_prefix=True):
         return f"{'gs://' if include_prefix else ''}{self.bucket}/{self.blob_nm()}"
     @staticmethod
-    def blob_path_static(bucket, dir):
-        f"{bucket.strip('/')}/{dir}"
+    def blob_path_static(bucket_nm, blob_nm, include_prefix=True):
+        f"{'gs://' if include_prefix else ''}{bucket_nm.strip('/')}/{blob_nm}"
     def getVars(self):
         return self.blob_path(include_prefix=True), self.blob_nm(), self.bucket, self.dir, self.file_nm(include_type=True)

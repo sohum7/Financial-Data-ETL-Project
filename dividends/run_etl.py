@@ -1,13 +1,15 @@
-#
+# Run ETL Pipeline
 
 # Builtin imports
 from datetime import datetime
 import hashlib
+from http import HTTPStatus
 
 # Shared imports
 from etl.extract.extractor import extract as extract_run
 from etl.transform.transformer import transform as transform_run
-from etl.load.loader import load as load_run
+from etl.load.loader import load_df as load_df_run, load_uri as load_uri_run
+from etl.load.merger import merge as merge_run
 from shared.clients.gcp.logging import GCPLogger
 from shared.clients.gcp.services import check_blob_exists, read_json_gcs, write_json_gcs, read_parquet_gcs, write_parquet_gcs, convert_dict_pandas_df
 from shared.clients.gcp.naming_conv import MS_FILE_NM, GCSPathLib
@@ -15,9 +17,13 @@ from shared.configs.config_loader import main as run_config_main; run_config_mai
 from shared.configs.config_loader import MS_CAT, MS_CAT_URL, MS_SYMBOLS_LST, MS_DATA_CTGYS_LST, MS_V2_API_KEY, MS_TGT_DATASET_NM, MS_TGT_TBL_NM, MS_STG_DATASET_NM, MS_STG_TBL_NM, MS_RAW_FILE_BUCKET_NM,  MS_RAW_FILE_BUCKET_DIR, MS_RAW_FILE_TYPE, MS_TFD_FILE_BUCKET_NM,  MS_TFD_FILE_BUCKET_DIR, MS_TFD_FILE_TYPE
 from shared.misc.utilities import http_return, get_past_week_range
 
+# Defaults
+HTTP_OK_CODE = HTTPStatus.OK.value
+HTTP_SERVER_ERR_CODE = HTTPStatus.INTERNAL_SERVER_ERROR.value
 
 
 def run_pipeline(data_cat, full_refresh=False):
+    
     if data_cat not in MS_DATA_CTGYS_LST:
         raise Exception(f"{data_cat} is not an approved")
     # Define parameters for the ETL process
@@ -54,12 +60,17 @@ def run_pipeline(data_cat, full_refresh=False):
     
     
     with GCPLogger() as gcp_logger:
+        ####################    ETL PROCESS STARTING    ####################
+        # EXTRACTION STARTING
+        
         gcp_logger.info("Starting extraction process...")
+        
         raw_gcs_path = GCSPathLib(MS_RAW_FILE_BUCKET_NM, f"{MS_RAW_FILE_BUCKET_DIR.strip('/')}/{wkly_subdir}", file_nm, MS_RAW_FILE_TYPE)
         raw_blob_path, raw_blob_nm, raw_bucket_nm, _, _ = raw_gcs_path.getVars()
         
         raw_file_exists = check_blob_exists(raw_bucket_nm, raw_blob_nm)
         raw_json = None
+        
         if raw_file_exists:
             gcp_logger.info(f"File already exists: {raw_blob_path}\nNo need for MS API request call")
             raw_json = read_json_gcs(raw_bucket_nm, raw_blob_nm)
@@ -73,18 +84,20 @@ def run_pipeline(data_cat, full_refresh=False):
             if raw_file_path is None:
                 err_msg = "Raw file not saved"
                 gcp_logger.error(err_msg)
-                return http_return(500, err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
             
             gcp_logger.info(f"Raw file saved to: {raw_file_path}")
             
         if raw_json is None:
             err_msg = "Extraction failed. No data returned from API."
             gcp_logger.error(err_msg)
-            return http_return(500, err_msg)
+            return http_return(HTTP_SERVER_ERR_CODE, err_msg)
         
         gcp_logger.info("Extraction process completed.")
         
-        
+        # EXTRACTION SUCCEEDED
+        #######################################################################################################################
+        # TRANSFORMATION STARTING
         
         gcp_logger.info("Starting transformation process...")
         tfd_gcs_path = GCSPathLib(MS_TFD_FILE_BUCKET_NM, f"{MS_TFD_FILE_BUCKET_DIR.strip('/')}/{wkly_subdir.strip('/')}", file_nm, MS_TFD_FILE_TYPE)
@@ -109,30 +122,48 @@ def run_pipeline(data_cat, full_refresh=False):
             if tfd_file_path is None:
                 err_msg = "Transformed file not saved"
                 gcp_logger.error(err_msg)
-                return http_return(500, err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
             
             gcp_logger.info(f"Transformed file saved to: {tfd_file_path}")
         
             if tfd_df is None:
                 err_msg = "Transformation failed"
                 gcp_logger.error(err_msg)
-                return http_return(500, err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
         
         gcp_logger.info("Transformation process completed.")    
         
+        # TRANSFORMATION SUCCEEDED
+        #######################################################################################################################
+        # LOADING STARTING
         
         gcp_logger.info("Starting loading process...")
+        
         tgt_ds_tbl = f"{MS_TGT_DATASET_NM}.{MS_TGT_TBL_NM}"
         stg_ds_tbl = f"{MS_STG_DATASET_NM}.{MS_STG_TBL_NM}"
         
-        lr_res = load_run(MS_CAT, tfd_df, tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
+        lr_res = load_df_run(tfd_df, tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
         
         if not lr_res:
-            gcp_logger.error("Load failed.")
-            return http_return(500, "Load failed.")
-        # else
+            err_msg = f"Load to {stg_ds_tbl} failed."
+            gcp_logger.error(err_msg)
+            return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+        
+        mr_res = merge_run(tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
+        
+        if not mr_res:
+            err_msg = f"Merge from {stg_ds_tbl} to {tgt_ds_tbl} failed."
+            gcp_logger.error(err_msg)
+            return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+        
         gcp_logger.info("Load process completed.")
         
+        # LOADING SUCCEEDED
+        ####################    ETL PROCESS SUCCEEDED    ####################
+        
+        success_msg = f"ETL process for {data_cat.upper()} completed."
+        gcp_logger.info(success_msg)
+        return http_return(HTTP_OK_CODE, success_msg)
 
 
 if __name__ == "__main__":
