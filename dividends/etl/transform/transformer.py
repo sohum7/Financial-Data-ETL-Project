@@ -1,54 +1,60 @@
 # Main transform logic for various data categories to GCS
 
-# Shared imports
-from google.cloud import exceptions as gcp_exceptions
-from pyspark.sql.functions import col, explode
-from shared.misc.utilities import http_return
+# Builtin imports
+import pandas as pd
+import logging
 
+def transform_pandas(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+    """
+    Transform a nested JSON dataframe using pandas.
+    """
 
+    # -----------------------
+    # 1. Flatten nested JSON structure
+    # -----------------------
+    if 'data' in df.columns:
+        df = df.explode('data')
+        df = pd.json_normalize(df['data'])
+    else:
+        logger.error("Column 'data' not found in DataFrame. Skipping explode step.")
 
-def transform(df, logger):
-    # Flatten the nested JSON structure and select the relevant fields
-    df = df.select(explode(col("data")).alias("record")).select("record.*")
-    
-    # Rename columns to match the desired schema
-    df = df \
-        .withColumnRenamed("dividend", "dividend_ratio") \
-        .withColumnRenamed("date",  "market_dt") \
-        .withColumnRenamed("payment_date", "payment_dt") \
-        .withColumnRenamed("record_date",  "record_dt") \
-        .withColumnRenamed("declaration_date",  "declar_dt") \
-        .withColumnRenamed("record_date",  "record_dt")
-    
-    # Replace null values in essential columns with default values or drop rows with null values based on the use case. For now, we will drop rows with null values in symbol, market_dt, and dividend_ratio columns since they are essential for analysis and downstream processing. We will replace null values in other columns with default values.
-    df = df.dropna(subset=['symbol', 'market_dt', 'dividend_ratio']) # drop rows with null values in symbol or market_dt columns since they are essential for analysis and downstream processing. we can choose to drop other columns with null values or impute them based on the use case, but for now we will only drop rows with null values in symbol market_dt and dividend_ratio columns.
-    
-    # Replace null values
-    df = df.fillna({
-        "distr_freq": "Unknown", # will have to see about this column since it has a lot of null values. we can choose to drop this column if it has too many null values or if it is not useful for analysis and downstream processing, but for now we will replace null values with "Unknown".
-        "payment_dt": None,
-        "record_dt": None,
-        "declar_dt": None
+    # -----------------------
+    # 2. Rename columns to match desired schema
+    # -----------------------
+    df = df.rename(columns={
+        "dividend": "dividend_ratio",
+        "date": "market_dt",
+        "payment_date": "pay_dt",
+        "record_date": "record_dt",
+        "declaration_date": "decl_dt"
     })
-    
-    # Cast date+time columns to only date type (remove time component)
-    df = df \
-        .withColumn("market_dt",  col("market_dt").cast("date")) \
-        .withColumn("payment_dt", col("payment_dt").cast("date")) \
-        .withColumn("record_dt",  col("record_dt").cast("date")) \
-        .withColumn("declar_dt",  col("declar_dt").cast("date")) \
-        .withColumn("record_dt",  col("record_dt").cast("date"))
-    
-    # Reorganize columns
-    df = df \
-        .select(
-        col("symbol"),
-        col("market_dt"),
-        col("dividend_ratio"),
-        col("distr_freq"),
-        col("payment_dt"),
-        col("record_dt"),
-        col("declar_dt")
-    )
-    
+
+    # -----------------------
+    # 3. Drop rows with nulls in essential columns
+    # -----------------------
+    df = df.dropna(subset=['symbol', 'market_dt', 'dividend_ratio'])
+
+    # -----------------------
+    # 4. Fill missing values for non-essential columns
+    # -----------------------
+    df['distr_freq'] = df.get('distr_freq', pd.Series()).fillna('Unknown')
+    df['payment_dt'] = df.get('payment_dt', pd.Series()).fillna(pd.NaT)
+    df['record_dt'] = df.get('record_dt', pd.Series()).fillna(pd.NaT)
+    df['declar_dt'] = df.get('declar_dt', pd.Series()).fillna(pd.NaT)
+
+    # -----------------------
+    # 5. Convert date columns to datetime.date (remove time component)
+    # -----------------------
+    date_cols = ['market_dt', 'payment_dt', 'record_dt', 'declar_dt']
+    for col_name in date_cols:
+        if col_name in df.columns:
+            df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.date
+
+    # -----------------------
+    # 6. Reorder columns
+    # -----------------------
+    columns_order = ['symbol', 'market_dt', 'dividend_ratio', 'distr_freq', \
+                    'payment_dt', 'record_dt', 'declar_dt']
+    df = df.reindex(columns=[c for c in columns_order if c in df.columns])
+
     return df

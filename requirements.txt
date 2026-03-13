@@ -6,6 +6,5 @@ google-cloud-secret-manager==2.26.0
 google-cloud-storage==3.9.0
 natsort==8.4.0
 pandas==3.0.1
-pyspark==3.5.0
 python-dotenv==1.2.2
-pytz==2025.2
+pytz==2026.1.post1
