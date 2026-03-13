@@ -1,7 +1,8 @@
 # GCS naming conventions for files and paths used in the project
 
 # Built-in imports
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import ClassVar
 
 # GCS file naming convention
 MS_FILE_NM = lambda DATA_CAT, START_DT, END_DT, HASH_VAL: \
@@ -37,12 +38,14 @@ class GCSPathLib:
     dir: str
     name: str
     type: str
+    _gcs_prefix: ClassVar[str] = field(init=False)
     
     def __post_init__(self):
         self.bucket = self.bucket.strip('/')
         self.dir    = self.dir.strip('/')
         self.name   = self.name.lstrip('/')
         self.type   = self.type.lower()
+        GCSPathLib._gcs_prefix = "gs://"
     
     def file_nm(self, include_type=True):
         return f"{self.name}{f'.{self.type}' if include_type else ''}"
@@ -51,9 +54,11 @@ class GCSPathLib:
     def blob_nm(self):
         return f"{self.dir}/{self.file_nm(include_type=True)}"
     def blob_path(self, include_prefix=True):
-        return f"{'gs://' if include_prefix else ''}{self.bucket}/{self.blob_nm()}"
+        bp = f"{self.bucket}/{self.blob_nm()}"
+        return GCSPathLib._gcs_prefix + bp if include_prefix else bp
     @staticmethod
     def blob_path_static(bucket_nm, blob_nm, include_prefix=True):
-        f"{'gs://' if include_prefix else ''}{bucket_nm.strip('/')}/{blob_nm}"
+        bp = f"{bucket_nm.strip('/')}/{blob_nm.strip('/')}"
+        return GCSPathLib._gcs_prefix + bp if include_prefix else bp
     def getVars(self):
         return self.blob_path(include_prefix=True), self.blob_nm(), self.bucket, self.dir, self.file_nm(include_type=True)

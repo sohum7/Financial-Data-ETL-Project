@@ -126,7 +126,7 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
             gcp_logger.info(f"File already exists: {tfd_blob_path}\nNo need to transform MS data again")
             tfd_df = read_parquet_gcs(tfd_bucket_nm, tfd_blob_nm)
         else:
-            gcp_logger.info(f"Transforming df")
+            gcp_logger.info("Transforming df")
             raw_df = convert_dict_pandas_df(raw_json, "data", gcp_logger)
             tfd_df = transform_run(raw_df, logger=gcp_logger)
             
@@ -186,10 +186,12 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
 if __name__ == "__main__":
     test = True
     
-    kwargs: dict[str, dict[str, str]] = {}
-    kwargs["manual_override_dates"] = { "batch_dt": "2026-03-08", \
-                                        "start_dt": "2026-03-01", \
-                                        "end_dt": "2026-03-07" \
-                                            }
+    kwargs: dict[str, dict[str, str]] = {
+        "manual_override_dates": {
+            "batch_dt": "2026-03-08",
+            "start_dt": "2026-03-01",
+            "end_dt"  : "2026-03-07",
+        }
+    }
     
     run_pipeline("dividends", False, **kwargs)

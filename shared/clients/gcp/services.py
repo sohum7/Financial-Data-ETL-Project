@@ -117,5 +117,6 @@ def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_
 # Convert python dictionary to a pandas DataFrame
 def convert_dict_pandas_df(json_dict: dict, extract_field: str, logger: logging.Logger | GCPLogger):
     logger.info(f"{convert_dict_pandas_df}: {list(json_dict.keys())}")
+    logger.info(f"{convert_dict_pandas_df}: {list(json_dict.values())}")
     data_only = json_dict.get(extract_field, [])
     return pd.DataFrame(data_only)

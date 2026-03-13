@@ -17,15 +17,7 @@ def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFr
     # -----------------------
     logger.info(df.columns)
     logger.info(df.head())
-    if 'data' in df.columns:
-        df = df.explode('data')
-        df = pd.json_normalize(df['data'].tolist())
-        logger.info(df.columns)
-        logger.info(df.head())
-    else:
-        logger.error("Column 'data' not found in DataFrame. Skipping explode step.")
-    logger.info(df.columns)
-    logger.info(df.head())
+    
     # -----------------------
     # 2. Rename columns to match desired schema
     # -----------------------
