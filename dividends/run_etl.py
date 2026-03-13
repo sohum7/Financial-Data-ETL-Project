@@ -75,7 +75,15 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
     
     
     with GCPLogger() as gcp_logger:
-        gcp_logger.info("")
+        gcp_logger.info(  f"batch_dt: {batch_dt} \
+                            start_dt: {start_dt} \
+                            end_dt: {end_dt} \
+                            symbols_lst_str: {symbols_lst_str} \
+                            hash_input: {hash_input} \
+                            file_hash: {file_hash} \
+                            file_nm: {file_nm} \
+                            wkly_subdir: {wkly_subdir} \
+                            ")
         ####################    ETL PROCESS STARTING    ####################
         # EXTRACTION STARTING
         
