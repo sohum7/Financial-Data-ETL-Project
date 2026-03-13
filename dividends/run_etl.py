@@ -24,13 +24,26 @@ HTTP_OK_CODE = HTTPStatus.OK.value
 HTTP_SERVER_ERR_CODE = HTTPStatus.INTERNAL_SERVER_ERROR.value
 
 
-def run_pipeline(data_cat, full_refresh=False):
+def run_pipeline(data_cat, full_refresh=False, **kwargs):
+    batch_dt: str
+    start_dt: str
+    end_dt: str
+    if "manual_override_dates" in kwargs and kwargs["manual_override_dates"]:
+        batch_dt, start_dt, end_dt = kwargs["manual_override_dates"]["batch_dt"], kwargs["manual_override_dates"]["start_dt"], kwargs["manual_override_dates"]["end_dt"]
+    else:
+        batch_dt, start_dt, end_dt = get_past_week_range()
+    
+    '''
+    batch_dt, start_dt, end_dt = \
+        kwargs["manual_override_dates"]["batch_dt"], kwargs["manual_override_dates"]["start_dt"], kwargs["manual_override_dates"]["end_dt"] \
+        if "manual_override_dates" in kwargs and kwargs["manual_override_dates"] \
+        else get_past_week_range()
+    '''
     
     if data_cat not in MS_DATA_CTGYS_LST:
         raise Exception(f"{data_cat} is not an approved")
     # Define parameters for the ETL process
     symbols_lst = MS_SYMBOLS_LST # Sort the symbols list for consistent ordering
-    batch_dt, start_dt, end_dt = get_past_week_range()
     
     # get last processed date for the data category from the database
     # TODO
@@ -62,6 +75,7 @@ def run_pipeline(data_cat, full_refresh=False):
     
     
     with GCPLogger() as gcp_logger:
+        gcp_logger.info("")
         ####################    ETL PROCESS STARTING    ####################
         # EXTRACTION STARTING
         
@@ -77,11 +91,12 @@ def run_pipeline(data_cat, full_refresh=False):
             gcp_logger.info(f"File already exists: {raw_blob_path}\nNo need for MS API request call")
             raw_json = read_json_gcs(raw_bucket_nm, raw_blob_nm)
         else:
-            gcp_logger.info(f"Making MS API request call")
+            gcp_logger.info("Making MS API request call")
             raw_json = extract_run(MS_CAT_URL, symbols_lst_str, MS_V2_API_KEY, batch_dt, start_dt, end_dt, logger=gcp_logger)
             
-            gcp_logger.info("Starting to save raw JSON to GCS...")
-            raw_file_path = write_json_gcs(raw_json, raw_bucket_nm, raw_blob_nm)
+            if raw_json:
+                gcp_logger.info("Starting to save raw JSON to GCS...")
+                raw_file_path = write_json_gcs(raw_json, raw_bucket_nm, raw_blob_nm)
             
             if raw_file_path is None:
                 err_msg = "Raw file not saved"
@@ -112,7 +127,7 @@ def run_pipeline(data_cat, full_refresh=False):
             tfd_df = read_parquet_gcs(tfd_bucket_nm, tfd_blob_nm)
         else:
             gcp_logger.info(f"Transforming df")
-            raw_df = convert_dict_pandas_df(raw_json)
+            raw_df = convert_dict_pandas_df(raw_json, "data", gcp_logger)
             tfd_df = transform_run(raw_df, logger=gcp_logger)
             
             gcp_logger.info(f"Raw DataFrame row count: {len(raw_df)}\n \
@@ -169,4 +184,12 @@ def run_pipeline(data_cat, full_refresh=False):
 
 
 if __name__ == "__main__":
-    run_pipeline('dividends')
+    test = True
+    
+    kwargs: dict[str, dict[str, str]] = {}
+    kwargs["manual_override_dates"] = { "batch_dt": "2026-03-08", \
+                                        "start_dt": "2026-03-01", \
+                                        "end_dt": "2026-03-07" \
+                                            }
+    
+    run_pipeline("dividends", False, **kwargs)
