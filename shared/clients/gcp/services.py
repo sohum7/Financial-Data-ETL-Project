@@ -17,7 +17,7 @@ from google.cloud import storage as gc_storage
 
 
 # Get ....
-def get_blob_resources(bucket_nm, blob_nm):
+def get_blob_resources(bucket_nm: str, blob_nm: str):
     storage_client_obj = gc_storage.Client()
     bucket_obj = storage_client_obj.bucket(bucket_nm)
     blob_obj = bucket_obj.blob(blob_nm)
@@ -55,7 +55,7 @@ def read_json_gcs(bucket_nm: str, blob_nm: str):
     return None
 
 # Write json from gcs path
-def write_json_gcs(data, bucket_nm: str, blob_nm: str):
+def write_json_gcs(data: dict, bucket_nm: str, blob_nm: str):
     blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
     file_type = "json"
     try:
@@ -114,6 +114,9 @@ def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_
     return None
 
 # Convert python dictionary to a pandas DataFrame
-def convert_dict_pandas_df(data: dict):
-    return pd.json_normalize(data)
-    #return pd.DataFrame(data)
+def convert_dict_pandas_df(json_dict: dict):
+    extract_field = "data"
+    data_only = json_dict.get(extract_field, [])
+
+    # Convert to DataFrame
+    df = pd.DataFrame(data_only)
