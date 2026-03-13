@@ -15,12 +15,13 @@ def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFr
     # -----------------------
     # 1. Flatten nested JSON structure
     # -----------------------
+    '''
     if 'data' in df.columns:
         df = df.explode('data')
         df = pd.json_normalize(df['data'].tolist())
     else:
         logger.error("Column 'data' not found in DataFrame. Skipping explode step.")
-
+    '''
     # -----------------------
     # 2. Rename columns to match desired schema
     # -----------------------
