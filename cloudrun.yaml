@@ -10,14 +10,14 @@ spec:
           serviceAccountName: ms-cloudrun-etl-sa
           containers:
             - name: ms-etl-container
-              image: us-central1-docker.pkg.dev/your-gcp-project-id/financial-data-etl-project/ms-etl:a363ef16
+              image: IMAGE_PLACEHOLDER
               command: ["python"]
               args: ["dividends/run_etl.py"]
               env:
                 - name: PROJECT_ID
-                  value: your-gcp-project-id
+                  value: PROJECT_ID_PLACEHOLDER
                 - name: ENVIRONMENT
-                  value: dev
+                  value: ENVIRONMENT_PLACEHOLDER
               resources:
                 limits:
                   cpu: "2"
