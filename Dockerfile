@@ -12,10 +12,8 @@ WORKDIR /app
 #    && apt-get install -y --no-install-recommends build-essential \
 #    && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency file first (so Docker caches pip install)
+# Copy dependency file first (so Docker caches pip install) and install Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 

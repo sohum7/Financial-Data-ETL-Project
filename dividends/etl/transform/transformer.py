@@ -4,7 +4,7 @@
 import pandas as pd
 import logging
 
-def transform_pandas(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+def transform(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     """
     Transform a nested JSON dataframe using pandas.
     """
@@ -14,7 +14,7 @@ def transform_pandas(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     # -----------------------
     if 'data' in df.columns:
         df = df.explode('data')
-        df = pd.json_normalize(df['data'])
+        df = pd.json_normalize(df['data'].tolist())
     else:
         logger.error("Column 'data' not found in DataFrame. Skipping explode step.")
 
@@ -48,7 +48,11 @@ def transform_pandas(df: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     date_cols = ['market_dt', 'payment_dt', 'record_dt', 'declar_dt']
     for col_name in date_cols:
         if col_name in df.columns:
-            df[col_name] = pd.to_datetime(df[col_name], errors='coerce').dt.date
+            df[col_name] = pd.to_datetime(df[col_name], errors='coerce')
+            if pd.api.types.is_datetime64_any_dtype(df[col_name]):
+                df[col_name] = df[col_name].dt.date
+            else:
+                df[col_name] = df[col_name].apply(lambda x: x.date() if pd.notnull(x) and hasattr(x, 'date') else pd.NaT)
 
     # -----------------------
     # 6. Reorder columns
