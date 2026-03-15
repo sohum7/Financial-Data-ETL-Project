@@ -16,7 +16,7 @@ def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFr
     # 1. 
     # -----------------------
     
-    if len(df):
+    if not len(df):
         logger.error("df has no data")
         return None
     

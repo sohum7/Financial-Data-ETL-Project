@@ -25,7 +25,7 @@ HTTP_SERVER_ERR_CODE = HTTPStatus.INTERNAL_SERVER_ERROR.value
 
 
 def run_pipeline(data_cat, full_refresh=False, **kwargs):
-    max_hash_len = 16
+    max_hash_len=16
     batch_dt: str
     start_dt: str
     end_dt: str
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     
     kwargs: dict[str, dict[str, str]] = {
         "manual_override_dates": {
-            "batch_dt": "2026-03-14",
+            "batch_dt": "2026-03-15",
             "start_dt": "2026-03-09",
             "end_dt"  : "2026-03-13",
         }
