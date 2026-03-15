@@ -2,6 +2,7 @@
 
 # Built-in imports
 from pandas import DataFrame as pd_DataFrame
+import logging
 
 # Shared imports
 from shared.clients.gcp.logging import GCPLogger

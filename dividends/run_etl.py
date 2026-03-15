@@ -25,6 +25,7 @@ HTTP_SERVER_ERR_CODE = HTTPStatus.INTERNAL_SERVER_ERROR.value
 
 
 def run_pipeline(data_cat, full_refresh=False, **kwargs):
+    max_hash_len = 16
     batch_dt: str
     start_dt: str
     end_dt: str
@@ -33,12 +34,6 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
     else:
         batch_dt, start_dt, end_dt = get_past_week_range()
     
-    '''
-    batch_dt, start_dt, end_dt = \
-        kwargs["manual_override_dates"]["batch_dt"], kwargs["manual_override_dates"]["start_dt"], kwargs["manual_override_dates"]["end_dt"] \
-        if "manual_override_dates" in kwargs and kwargs["manual_override_dates"] \
-        else get_past_week_range()
-    '''
     
     if data_cat not in MS_DATA_CTGYS_LST:
         raise Exception(f"{data_cat} is not an approved")
@@ -53,9 +48,9 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
     symbols_lst_str = ",".join(symbols_lst) # Convert the symbols list to a comma-separated string for the API request
     
     hash_input = f"{MS_CAT}_{start_dt}_{end_dt}_{symbols_lst_str}" # Create a unique hash input string based on the data category, date range, and symbols list for consistent hashing
-    file_hash = hashlib.md5(hash_input.encode()).hexdigest()
+    file_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:max_hash_len]
     
-    wkly_subdir = f"{start_dt}_{end_dt}_{file_hash}".strip('/')
+    wkly_subdir = f"start_dt={start_dt}"
     file_nm = MS_FILE_NM(MS_CAT, start_dt, end_dt, file_hash)
     
     # check if already processed data
@@ -89,74 +84,104 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
         
         gcp_logger.info("Starting extraction process...")
         
-        raw_gcs_path = GCSPathLib(MS_RAW_FILE_BUCKET_NM, f"{MS_RAW_FILE_BUCKET_DIR.strip('/')}/{wkly_subdir}", file_nm, MS_RAW_FILE_TYPE)
-        raw_blob_path, raw_blob_nm, raw_bucket_nm, _, _ = raw_gcs_path.getVars()
+        raw_gcs_path_obj = GCSPathLib(MS_RAW_FILE_BUCKET_NM, f"{MS_RAW_FILE_BUCKET_DIR.strip('/')}/{wkly_subdir}", file_nm, MS_RAW_FILE_TYPE)
+        raw_blob_path, raw_blob_nm, raw_bucket_nm, _, _ = raw_gcs_path_obj.getVars()
         
-        raw_file_exists = check_blob_exists(raw_bucket_nm, raw_blob_nm)
         raw_json = None
+        raw_file_exists = check_blob_exists(raw_bucket_nm, raw_blob_nm)
+        
+        gcp_logger.info(f"raw_file_exists: {raw_file_exists}")
         
         if raw_file_exists:
-            gcp_logger.info(f"File already exists: {raw_blob_path}\nNo need for MS API request call")
+            gcp_logger.info(f"Raw source file already exists: {raw_blob_path}\nNo need for MS API request call.")
+            
+            gcp_logger.info(f"Reading raw {MS_RAW_FILE_TYPE} file from gcs blob...")
             raw_json = read_json_gcs(raw_bucket_nm, raw_blob_nm)
-        else:
-            gcp_logger.info("Making MS API request call")
-            raw_json = extract_run(MS_CAT_URL, symbols_lst_str, MS_V2_API_KEY, batch_dt, start_dt, end_dt, logger=gcp_logger)
             
-            if raw_json:
-                gcp_logger.info("Starting to save raw JSON to GCS...")
-                raw_file_path = write_json_gcs(raw_json, raw_bucket_nm, raw_blob_nm)
-            
-            if raw_file_path is None:
-                err_msg = "Raw file not saved"
+            if raw_json is None:
+                err_msg = f"ERROR: Raw {MS_RAW_FILE_TYPE} file was not read."
                 gcp_logger.error(err_msg)
                 return http_return(HTTP_SERVER_ERR_CODE, err_msg)
             
-            gcp_logger.info(f"Raw file saved to: {raw_file_path}")
+            gcp_logger.info(f"SUCCESS: Raw {MS_RAW_FILE_TYPE} file was read.") # i can push these message to a list and send the list all at once????
+        else:
+            gcp_logger.info("Making MS API request call...")
+            raw_json = extract_run(MS_CAT_URL, symbols_lst_str, MS_V2_API_KEY, batch_dt, start_dt, end_dt, logger=gcp_logger)
+            
+            if raw_json is None:
+                err_msg = "ERROR: Raw source data was unable to be extracted via MS API request call."
+                gcp_logger.error(err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+            
+            gcp_logger.info("SUCCESS: Raw source data was extracted.")
+            
+            gcp_logger.info(f"Starting to save raw {MS_RAW_FILE_TYPE} to GCS...")
+            raw_file_path = write_json_gcs(raw_json, raw_bucket_nm, raw_blob_nm)
+            
+            if raw_file_path is None:
+                err_msg = "ERROR: Raw data not saved to GCS."
+                gcp_logger.error(err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+            
+            gcp_logger.info(f"SUCCESS: Raw data saved to: {raw_file_path}")
             
         if raw_json is None:
-            err_msg = "Extraction failed. No data returned from API."
+            err_msg = "ERROR: Extraction failed and/or no data returned from API."
             gcp_logger.error(err_msg)
             return http_return(HTTP_SERVER_ERR_CODE, err_msg)
         
-        gcp_logger.info("Extraction process completed.")
+        gcp_logger.info("******** Extraction process completed ********")
         
         # EXTRACTION SUCCEEDED
         #######################################################################################################################
         # TRANSFORMATION STARTING
         
         gcp_logger.info("Starting transformation process...")
-        tfd_gcs_path = GCSPathLib(MS_TFD_FILE_BUCKET_NM, f"{MS_TFD_FILE_BUCKET_DIR.strip('/')}/{wkly_subdir.strip('/')}", file_nm, MS_TFD_FILE_TYPE)
-        tfd_blob_path, tfd_blob_nm, tfd_bucket_nm, _, _ = tfd_gcs_path.getVars()
         
-        tfd_file_exists = check_blob_exists(tfd_bucket_nm, tfd_blob_nm)
+        tfd_gcs_path_obj = GCSPathLib(MS_TFD_FILE_BUCKET_NM, f"{MS_TFD_FILE_BUCKET_DIR.strip('/')}/{wkly_subdir.strip('/')}", file_nm, MS_TFD_FILE_TYPE)
+        tfd_blob_path, tfd_blob_nm, tfd_bucket_nm, _, _ = tfd_gcs_path_obj.getVars()
+        
         tfd_df = None
+        tfd_file_exists = check_blob_exists(tfd_bucket_nm, tfd_blob_nm)
+        
+        gcp_logger.info(f"tfd_file_exists: {tfd_file_exists}")
+        
         if tfd_file_exists:
-            gcp_logger.info(f"File already exists: {tfd_blob_path}\nNo need to transform MS data again")
+            gcp_logger.info(f"File already exists: {tfd_blob_path}\nNo need to transform MS data again.")
+            
+            gcp_logger.info(f"Reading {MS_TFD_FILE_TYPE} file from gcs blob...")
             tfd_df = read_parquet_gcs(tfd_bucket_nm, tfd_blob_nm)
+            
+            if tfd_df is None:
+                err_msg = f"ERROR: Transformed {MS_TFD_FILE_TYPE} file was not read."
+                gcp_logger.error(err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+            
+            gcp_logger.info(f"SUCCESS: Transformed {MS_TFD_FILE_TYPE} file was read.")
         else:
-            gcp_logger.info("Transforming df")
+            gcp_logger.info("Transforming df...")
             raw_df = convert_dict_pandas_df(raw_json, "data", gcp_logger)
             tfd_df = transform_run(raw_df, logger=gcp_logger)
             
-            gcp_logger.info(f"Raw DataFrame row count: {len(raw_df)}\n \
-                            Transformed DataFrame row count: {len(raw_df)}")
+            if tfd_df is None:
+                err_msg = "ERROR: Transformation failed."
+                gcp_logger.error(err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
             
-            gcp_logger.info("Starting to save transformed data as parquet to GCS...")
+            gcp_logger.info(f"SUCCESS: Transformation completed.")
+            gcp_logger.info(f"Raw DataFrame row count: {len(raw_df)}\nTransformed DataFrame row count: {len(tfd_df)}")
+            
+            gcp_logger.info(f"Starting to save transformed data as {MS_TFD_FILE_TYPE} to GCS...")
             tfd_file_path = write_parquet_gcs(tfd_df, tfd_bucket_nm, tfd_blob_nm, partition_cols=None)
             
             if tfd_file_path is None:
-                err_msg = "Transformed file not saved"
+                err_msg = "ERROR: Transformed file not saved."
                 gcp_logger.error(err_msg)
                 return http_return(HTTP_SERVER_ERR_CODE, err_msg)
             
-            gcp_logger.info(f"Transformed file saved to: {tfd_file_path}")
+            gcp_logger.info(f"SUCCESS: Transformed file saved to: {tfd_file_path}")
         
-            if tfd_df is None:
-                err_msg = "Transformation failed"
-                gcp_logger.error(err_msg)
-                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
-        
-        gcp_logger.info("Transformation process completed.")    
+        gcp_logger.info("********  Transformation process completed  ********")    
         
         # TRANSFORMATION SUCCEEDED
         #######################################################################################################################
@@ -181,12 +206,12 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
             gcp_logger.error(err_msg)
             return http_return(HTTP_SERVER_ERR_CODE, err_msg)
         
-        gcp_logger.info("Load process completed.")
+        gcp_logger.info("********  Load process completed  ********")
         
         # LOADING SUCCEEDED
         ####################    ETL PROCESS SUCCEEDED    ####################
         
-        success_msg = f"ETL process for {data_cat.upper()} completed."
+        success_msg = f"********  ETL process for {data_cat.upper()} completed  ********"
         gcp_logger.info(success_msg)
         return http_return(HTTP_OK_CODE, success_msg)
 
