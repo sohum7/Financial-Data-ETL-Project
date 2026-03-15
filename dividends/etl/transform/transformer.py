@@ -7,16 +7,18 @@ import logging
 # Shared imports
 from shared.clients.gcp.logging import GCPLogger
 
-def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFrame:
+def transform(df: pd.DataFrame, logger: logging.Logger | GCPLogger) -> pd.DataFrame | None:
     """
     Transform a nested JSON dataframe using pandas.
     """
 
     # -----------------------
-    # 1. Flatten nested JSON structure
+    # 1. 
     # -----------------------
-    logger.info(df.columns)
-    logger.info(df.head())
+    
+    if len(df):
+        logger.error("df has no data")
+        return None
     
     # -----------------------
     # 2. Rename columns to match desired schema
