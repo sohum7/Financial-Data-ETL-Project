@@ -6,7 +6,7 @@ import logging
 
 # Shared imports
 from shared.clients.gcp.logging import GCPLogger
-from shared.clients.gcp.naming_conv import GCSPathLib
+#from shared.clients.gcp.naming_conv import GCSPathLib
 
 # Google API imports
 from google.api_core.exceptions import Conflict
@@ -81,7 +81,7 @@ def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_co
     
     return create_tbl_query_job
 
-def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl) -> gc_bigquery.QueryJob:
+def create_stg_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl, stg_ds_tbl) -> gc_bigquery.QueryJob:
     if "." not in tgt_ds_tbl or "." not in stg_ds_tbl: logging.error(f"create_stg_tbl was not provided tgt_ds_tbl and stg_ds_tbl parameter's with dataset and table names as such 'ds_nm.tbl_nm' ")
 
     create_tbl_query = \
@@ -95,25 +95,15 @@ def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl) -> gc_bigquery.QueryJob:
     
     return create_tbl_query_job
 
-def load_df_to_stg_tbl(df, bq_client, stg_ds_tbl) -> gc_bigquery.LoadJob:
-    if df is None:
-        logging.error(f"df is None")
-        return None
-    if not len(df):
-        logging.error(f"0 records in df")
-    else:
-        job_config = gc_bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
-        
-        load_tbl_query_job = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config)
-        load_tbl_query_job.result()
+def load_df_to_stg_tbl(df: pd_DataFrame, bq_client: gc_bigquery.Client, stg_ds_tbl: str) -> gc_bigquery.LoadJob:
+    job_config = gc_bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
     
+    load_tbl_query_job = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config=job_config)
+    load_tbl_query_job.result()
+
     return load_tbl_query_job
 
-def load_uri_to_stg_tbl(uri, bq_client, stg_ds_tbl) -> gc_bigquery.QueryJob:
-    if "." not in uri: 
-        logging.error(f"load_to_stg_tbl was not provided file type from uri parameter")
-        return None
-    
+def load_uri_to_stg_tbl(uri: str, bq_client: gc_bigquery.Client, stg_ds_tbl) -> gc_bigquery.QueryJob:
     file_type = uri.split(".")[-1]
     
     load_tbl_query = \
