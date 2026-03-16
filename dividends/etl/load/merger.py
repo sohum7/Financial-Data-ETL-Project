@@ -33,19 +33,20 @@ def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> bool:
 def merge_stg_to_tgt_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_tbl: str) -> gc_bigquery.QueryJob:
     merge_tbls_query = \
         f"""
-            MERGE INTO market_stack.dividends AS target
-            USING market_stack_stg.dividends_stg AS staging
+            MERGE INTO {tgt_ds_tbl} AS target
+            USING {stg_ds_tbl} AS staging
             ON target.symbol = staging.symbol
             AND target.market_dt = staging.market_dt
             WHEN MATCHED THEN
             UPDATE SET
+                target.distr_freq = staging.distr_freq,
                 target.payment_dt = staging.payment_dt,
                 target.record_dt  = staging.record_dt,
                 target.declar_dt  = staging.declar_dt,
-                target.dividend   = staging.dividend
+                target.dividend_ratio   = staging.dividend_ratio
             WHEN NOT MATCHED THEN
-            INSERT (symbol, market_dt, payment_dt, record_dt, declar_dt, dividend)
-            VALUES (staging.symbol, staging.market_dt, staging.payment_dt, staging.record_dt, staging.declar_dt, staging.dividend);
+            INSERT (symbol, market_dt, payment_dt, record_dt, declar_dt, dividend_ratio)
+            VALUES (staging.symbol, staging.market_dt, staging.payment_dt, staging.record_dt, staging.declar_dt, staging.dividend_ratio);
         """
     
     merge_tbls_query_job = bq_client.query(merge_tbls_query)
