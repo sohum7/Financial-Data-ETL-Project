@@ -66,7 +66,7 @@ def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_co
             CREATE TABLE IF NOT EXISTS {ds_tbl} (
                 symbol STRING,
                 market_dt DATE,
-                dividend_ratio DOUBLE,
+                dividend_ratio FLOAT64,
                 distr_freq STRING,
                 payment_dt DATE,
                 record_dt DATE,
