@@ -26,7 +26,7 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
         bq_client = gc_bigquery.Client()
         #bq_client.load_table_from_dataframe # remove
         
-        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", "symbol")
+        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", "symbol", "market_dt")
         if create_tgt_tbl_job.error_result:
             err_msg = f"Error creating target table: {create_tgt_tbl_job.error_result}"
             raise Conflict(err_msg)

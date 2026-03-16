@@ -1,6 +1,16 @@
 steps:
 
-# 1️⃣ Build image
+# 0️⃣ Pull previous image for cache (ignore error if first build)
+- id: pull-cache
+  name: gcr.io/cloud-builders/docker
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      docker pull $_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest || exit 0
+  waitFor: ['-']
+
+# 1️⃣ Build image using cache
 - id: build
   name: gcr.io/cloud-builders/docker
   args:
@@ -8,11 +18,15 @@ steps:
       "build",
       "-t",
       "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA",
+      "-t",
+      "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest",
+      "--cache-from",
+      "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest",
       "."
     ]
-  waitFor: ['-']  # starts immediately
+  waitFor: ['pull-cache']
 
-# 2️⃣ Prepare YAML in-place (replace IMAGE_PLACEHOLDER)
+# 2️⃣ Prepare YAML in-place
 - id: prepare-yaml
   name: gcr.io/google.com/cloudsdktool/cloud-sdk
   entrypoint: bash
@@ -22,9 +36,9 @@ steps:
       sed -i "s|ENVIRONMENT_PLACEHOLDER|$_ENV|g" cloudrun.yaml
       sed -i "s|PROJECT_ID_PLACEHOLDER|$PROJECT_ID|g" cloudrun.yaml
       sed -i "s|IMAGE_PLACEHOLDER|$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA|g" cloudrun.yaml
-  waitFor: ['-']  # can run in parallel with build
+  waitFor: ['-']
 
-# 3️⃣ Push image (waits for build)
+# 3️⃣ Push image
 - id: push
   name: gcr.io/cloud-builders/docker
   args:
@@ -34,7 +48,17 @@ steps:
     ]
   waitFor: ['build']
 
-# 4️⃣ Deploy Cloud Run Job (waits for push + prepared YAML)
+# 3b️⃣ Push latest tag (needed for caching)
+- id: push-latest
+  name: gcr.io/cloud-builders/docker
+  args:
+    [
+      "push",
+      "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest"
+    ]
+  waitFor: ['build']
+
+# 4️⃣ Deploy Cloud Run Job
 - id: deploy-job
   name: gcr.io/google.com/cloudsdktool/cloud-sdk
   args:
@@ -46,9 +70,9 @@ steps:
       "cloudrun.yaml",
       "--region=$_REGION"
     ]
-  waitFor: ['push', 'prepare-yaml']
+  waitFor: ['push', 'push-latest', 'prepare-yaml']
 
-# 5️⃣ Execute Job (waits for deploy)
+# 5️⃣ Execute Job
 - id: run-job
   name: gcr.io/google.com/cloudsdktool/cloud-sdk
   args:
@@ -64,6 +88,7 @@ steps:
 
 images:
 - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:$COMMIT_SHA"
+- "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO_NAME/$_IMAGE_NAME:latest"
 
 options:
   logging: CLOUD_LOGGING_ONLY
