@@ -3,7 +3,7 @@
 # Built-in imports
 from io import BytesIO
 from json import dumps as json_dumps, loads as json_loads, JSONDecodeError
-from natsort import natsort_keygen, ns
+#from natsort import natsort_keygen, ns
 import logging
 import pandas as pd
 from typing import Sequence, Hashable
@@ -14,14 +14,36 @@ from shared.clients.gcp.logging import GCPLogger
 
 # Google API imports
 from google.api_core.exceptions import NotFound, Forbidden
+from google.cloud import bigquery as gc_bq
 from google.cloud import storage as gc_storage
 
+# Get ....
+def get_or_create_dataset(dataset_id: str, location: str="US"):
+    bq_client = gc_bq.Client()  # Uses default project
+    full_dataset_id = f"{bq_client.project}.{dataset_id}"
+    
+    bq_dataset = gc_bq.Dataset(full_dataset_id)
+    bq_dataset.location = location
+    
+    # Create dataset if it does not exist (exists_ok=True avoids error if it exists)
+    bq_dataset = bq_client.create_dataset(bq_dataset, exists_ok=True)
+    
+    return bq_client, bq_dataset
+
+def create_dataset(dataset_id: str, location: str="US"):
+    try:
+        get_or_create_dataset(dataset_id, location)
+        return True
+    except Exception as e:
+        logging.error(f"Running into issues w/ creating dataset {dataset_id}: {e}")
+    return False
 
 # Get ....
 def get_blob_resources(bucket_nm: str, blob_nm: str):
     storage_client_obj = gc_storage.Client()
     bucket_obj = storage_client_obj.bucket(bucket_nm)
     blob_obj = bucket_obj.blob(blob_nm)
+    
     return storage_client_obj, bucket_obj, blob_obj
 
 # Check if a blob exists

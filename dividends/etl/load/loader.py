@@ -23,15 +23,14 @@ def load(df_or_uri, tgt_ds_tbl, stg_ds_tbl, logger: GCPLogger):
 def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPLogger):
     try:
         bq_client = gc_bigquery.Client()
-        bq_client.load_table_from_dataframe
+        #bq_client.load_table_from_dataframe # remove
         
-        # Create or replace staging table
         create_stg_tbl_job = create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
         if create_stg_tbl_job.error_result:
             err_msg = f"Error creating {stg_ds_tbl} staging table: {create_stg_tbl_job.error_result}"
             raise Conflict(err_msg)
         
-        load_to_stg_tbl_job = load_stg_tbl_func(bq_client, df_or_uri, stg_ds_tbl)
+        load_to_stg_tbl_job = load_stg_tbl_func(df_or_uri, bq_client, stg_ds_tbl)
         if load_to_stg_tbl_job is None or load_to_stg_tbl_job.errors:
             err_msg = f"Error loading data to {stg_ds_tbl} staging table{'.' if not load_to_stg_tbl_job else f': {load_to_stg_tbl_job.errors}'}"
             raise Conflict(err_msg)
@@ -60,7 +59,7 @@ def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
     
     return create_tbl_query_job
 
-def load_df_to_stg_tbl(bq_client, df, stg_ds_tbl):
+def load_df_to_stg_tbl(df, bq_client, stg_ds_tbl):
     if df is None:
         logging.error(f"df is None")
         return None
@@ -74,7 +73,7 @@ def load_df_to_stg_tbl(bq_client, df, stg_ds_tbl):
     
     return load_tbl_query_job
 
-def load_uri_to_stg_tbl(bq_client, uri, stg_ds_tbl):
+def load_uri_to_stg_tbl(uri, bq_client, stg_ds_tbl):
     if "." not in uri: 
         logging.error(f"load_to_stg_tbl was not provided file type from uri parameter")
         return None

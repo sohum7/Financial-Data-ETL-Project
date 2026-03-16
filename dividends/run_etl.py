@@ -13,7 +13,7 @@ from etl.load.merger import merge as merge_run
 
 # Shared imports
 from shared.clients.gcp.logging import GCPLogger
-from shared.clients.gcp.services import check_blob_exists, read_json_gcs, write_json_gcs, read_parquet_gcs, write_parquet_gcs, convert_dict_pandas_df
+from shared.clients.gcp.services import create_dataset, check_blob_exists, read_json_gcs, write_json_gcs, read_parquet_gcs, write_parquet_gcs, convert_dict_pandas_df
 from shared.clients.gcp.naming_conv import MS_FILE_NM, GCSPathLib
 from shared.configs.config_loader import main as run_config_main; run_config_main();
 from shared.configs.config_loader import MS_CAT, MS_CAT_URL, MS_SYMBOLS_LST, MS_DATA_CTGYS_LST, MS_V2_API_KEY, MS_TGT_DATASET_NM, MS_TGT_TBL_NM, MS_STG_DATASET_NM, MS_STG_TBL_NM, MS_RAW_FILE_BUCKET_NM,  MS_RAW_FILE_BUCKET_DIR, MS_RAW_FILE_TYPE, MS_TFD_FILE_BUCKET_NM,  MS_TFD_FILE_BUCKET_DIR, MS_TFD_FILE_TYPE
@@ -192,19 +192,32 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
         tgt_ds_tbl = f"{MS_TGT_DATASET_NM}.{MS_TGT_TBL_NM}"
         stg_ds_tbl = f"{MS_STG_DATASET_NM}.{MS_STG_TBL_NM}"
         
+        tgt_ds_exists = create_dataset(MS_TGT_DATASET_NM)
+        stg_ds_exists = create_dataset(MS_STG_DATASET_NM)
+        
+        if not tgt_ds_exists or not stg_ds_exists: 
+            err_msg = f"ERROR: Dataset {MS_TGT_DATASET_NM} or {MS_STG_DATASET_NM} was not created."
+            gcp_logger.error(err_msg)
+            return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+        
         lr_res = load_run(tfd_df, tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
         
         if not lr_res:
-            err_msg = f"Load to {stg_ds_tbl} failed."
+            err_msg = f"ERROR: Load to staging table {stg_ds_tbl} failed."
             gcp_logger.error(err_msg)
             return http_return(HTTP_SERVER_ERR_CODE, err_msg)
         
+        gcp_logger.info(f"SUCCESS: Loaded to staging table {stg_ds_tbl}")
+        
+        gcp_logger.info("Starting merging process...")
         mr_res = merge_run(tgt_ds_tbl, stg_ds_tbl, logger=gcp_logger)
         
         if not mr_res:
-            err_msg = f"Merge from {stg_ds_tbl} to {tgt_ds_tbl} failed."
+            err_msg = f"ERROR: Merge from {stg_ds_tbl} to {tgt_ds_tbl} failed."
             gcp_logger.error(err_msg)
             return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+        
+        gcp_logger.info(f"SUCCESS: Merged from {stg_ds_tbl} to {tgt_ds_tbl}")
         
         gcp_logger.info("********  Load process completed  ********")
         

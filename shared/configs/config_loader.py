@@ -91,7 +91,7 @@ def main(data_cat="dividends"):
     MS_TFD_FILE_BUCKET_DIR = ms_cat_cfg["tfd_file_bucket_dir"]
     
     ## Cleaned data location
-    MS_TGT_DATASET_NM = f"{ms_cfg['bq_target_dataset_base']}-{GC_ENV}"
-    MS_STG_DATASET_NM = f"{ms_cfg['bq_staging_dataset_base']}-{GC_ENV}"
+    MS_TGT_DATASET_NM = f"{ms_cfg['bq_target_dataset_base']}_{GC_ENV}"
+    MS_STG_DATASET_NM = f"{ms_cfg['bq_staging_dataset_base']}_{GC_ENV}"
     MS_TGT_TBL_NM = MS_CAT
     MS_STG_TBL_NM = f"{MS_TGT_TBL_NM}_stg"
