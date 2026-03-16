@@ -37,7 +37,7 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
             raise Conflict(err_msg)
         
         load_to_stg_tbl_job = load_stg_tbl_func(df_or_uri, bq_client, stg_ds_tbl)
-        if load_to_stg_tbl_job is None or load_to_stg_tbl_job.errors:
+        if load_to_stg_tbl_job.errors:
             err_msg = f"Error loading data to {stg_ds_tbl} staging table{'.' if not load_to_stg_tbl_job else f': {load_to_stg_tbl_job.errors}'}"
             raise Conflict(err_msg)
         
