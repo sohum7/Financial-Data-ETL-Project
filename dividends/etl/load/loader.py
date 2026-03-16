@@ -54,7 +54,7 @@ def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, partiti
     optional_clause = ""
     if partition_col is not None:
         partition_col.strip()
-        optional_clause = f"PARTITIONED BY {partition_col.strip()}"
+        optional_clause = f"PARTITION BY {partition_col.strip()}"
     if not cluster_cols:
         cluster_cols_str = ", ".join( col.strip() for col in cluster_cols )
         optional_clause += f"CLUSTER BY ({cluster_cols_str})"

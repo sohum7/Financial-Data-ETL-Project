@@ -218,7 +218,7 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
             return http_return(HTTP_SERVER_ERR_CODE, err_msg)
         
         gcp_logger.info(f"SUCCESS: Merged from {stg_ds_tbl} to {tgt_ds_tbl}")
-        
+        #gcp_logger.info(f"row count before and after.....")
         gcp_logger.info("********  Load process completed  ********")
         
         # LOADING SUCCEEDED
