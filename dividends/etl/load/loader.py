@@ -25,7 +25,7 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
         bq_client = gc_bigquery.Client()
         #bq_client.load_table_from_dataframe # remove
         
-        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", True, "symbol", "market_dt")
+        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", "symbol", "market_dt")
         if create_tgt_tbl_job.error_result:
             err_msg = f"Error creating target table: {create_tgt_tbl_job.error_result}"
             return Conflict(err_msg)
@@ -50,7 +50,7 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
     
     return False
 
-def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_col: str | None=None, part_col_is_dt: bool=False, *cluster_cols: str):
+def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_col: str | None=None, *cluster_cols: str):
     optional_clause = ""
     
     if part_col:
@@ -59,7 +59,7 @@ def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_co
     
     if cluster_cols:
         cluster_cols_str = ", ".join( col.strip() for col in cluster_cols )
-        optional_clause += f" CLUSTER BY ({cluster_cols_str}) "
+        optional_clause += f" CLUSTER BY {cluster_cols_str} "
     
     create_tbl_query = \
         f"""
