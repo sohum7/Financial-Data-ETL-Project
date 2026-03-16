@@ -12,23 +12,24 @@ from shared.clients.gcp.naming_conv import GCSPathLib
 from google.api_core.exceptions import Conflict
 from google.cloud import bigquery as gc_bigquery
 
-def load(df_or_uri, tgt_ds_tbl, stg_ds_tbl, logger: GCPLogger):
+
+def load(df_or_uri: pd_DataFrame | str, tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> bool:
     if isinstance(df_or_uri, pd_DataFrame):
         logger.info("Passing a pandas DataFrame to load function")
-        load_main(df_or_uri, load_df_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
+        return load_main(df_or_uri, load_df_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
     elif isinstance(df_or_uri, str):
         logger.info(f"Passing a uri to load function: {df_or_uri}")
-        load_main(df_or_uri, load_uri_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
+        return load_main(df_or_uri, load_uri_to_stg_tbl, tgt_ds_tbl, stg_ds_tbl, logger)
 
 def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPLogger):
     try:
         bq_client = gc_bigquery.Client()
         #bq_client.load_table_from_dataframe # remove
         
-        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", "symbol", "market_dt")
+        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", "symbol")
         if create_tgt_tbl_job.error_result:
             err_msg = f"Error creating target table: {create_tgt_tbl_job.error_result}"
-            return Conflict(err_msg)
+            raise Conflict(err_msg)
         
         create_stg_tbl_job = create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
         if create_stg_tbl_job.error_result:
@@ -50,7 +51,7 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
     
     return False
 
-def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_col: str | None=None, *cluster_cols: str):
+def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_col: str | None=None, *cluster_cols: str) -> gc_bigquery.QueryJob:
     optional_clause = ""
     
     if part_col:
@@ -80,7 +81,7 @@ def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_co
     
     return create_tbl_query_job
 
-def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
+def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl) -> gc_bigquery.QueryJob:
     if "." not in tgt_ds_tbl or "." not in stg_ds_tbl: logging.error(f"create_stg_tbl was not provided tgt_ds_tbl and stg_ds_tbl parameter's with dataset and table names as such 'ds_nm.tbl_nm' ")
 
     create_tbl_query = \
@@ -94,7 +95,7 @@ def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
     
     return create_tbl_query_job
 
-def load_df_to_stg_tbl(df, bq_client, stg_ds_tbl):
+def load_df_to_stg_tbl(df, bq_client, stg_ds_tbl) -> gc_bigquery.LoadJob:
     if df is None:
         logging.error(f"df is None")
         return None
@@ -108,7 +109,7 @@ def load_df_to_stg_tbl(df, bq_client, stg_ds_tbl):
     
     return load_tbl_query_job
 
-def load_uri_to_stg_tbl(uri, bq_client, stg_ds_tbl):
+def load_uri_to_stg_tbl(uri, bq_client, stg_ds_tbl) -> gc_bigquery.QueryJob:
     if "." not in uri: 
         logging.error(f"load_to_stg_tbl was not provided file type from uri parameter")
         return None
