@@ -34,10 +34,10 @@ def merge_stg_to_tgt_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_
             AND target.market_dt = staging.market_dt
             WHEN MATCHED THEN
             UPDATE SET
-                payment_dt = staging.payment_dt,
-                record_dt  = staging.record_dt,
-                declar_dt  = staging.declar_dt,
-                dividend   = staging.dividend
+                target.payment_dt = staging.payment_dt,
+                target.record_dt  = staging.record_dt,
+                target.declar_dt  = staging.declar_dt,
+                target.dividend   = staging.dividend
             WHEN NOT MATCHED THEN
             INSERT (symbol, market_dt, payment_dt, record_dt, declar_dt, dividend)
             VALUES (staging.symbol, staging.market_dt, staging.payment_dt, staging.record_dt, staging.declar_dt, staging.dividend);
