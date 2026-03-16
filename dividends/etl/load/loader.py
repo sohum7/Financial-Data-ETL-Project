@@ -54,8 +54,8 @@ def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, part_co
     optional_clause = ""
     
     if part_col:
-        tmp_optional_clause = f"DATE({part_col})" if part_col_is_dt else part_col
-        optional_clause = f" PARTITION BY {tmp_optional_clause} "
+        #tmp_optional_clause = f"DATE({part_col})" if part_col_is_dt else part_col
+        optional_clause = f" PARTITION BY {part_col} "
     
     if cluster_cols:
         cluster_cols_str = ", ".join( col.strip() for col in cluster_cols )
