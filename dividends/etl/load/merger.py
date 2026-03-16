@@ -5,7 +5,9 @@ from shared.clients.gcp.logging import GCPLogger
 from shared.misc.utilities import http_return
 
 # Google API imports
+from google.api_core.exceptions import Conflict
 from google.cloud import bigquery as gc_bigquery
+
 
 
 def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> bool:
@@ -14,11 +16,14 @@ def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> bool:
         
         merge_stg_to_tgt_tbl_job = merge_stg_to_tgt_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
         if merge_stg_to_tgt_tbl_job.errors:
-            msg = f"Error merging staging to target table: {merge_stg_to_tgt_tbl_job.error_result}"
-            logger.error(msg)
+            err_msg = f"Error merging staging to target table: {merge_stg_to_tgt_tbl_job.error_result}"
+            raise Conflict(err_msg)
+            
+    except Conflict as e:
+        logger.error(e.message)
     except Exception as e:
-        msg = f"Error merging data from staging to target table in BigQuery"
-        logger.error(msg)
+        err_msg = f"Error merging data from staging to target table in BigQuery"
+        logger.error(err_msg)
     else: 
         return True
     
