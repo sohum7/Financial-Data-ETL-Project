@@ -25,6 +25,11 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
         bq_client = gc_bigquery.Client()
         #bq_client.load_table_from_dataframe # remove
         
+        create_tgt_tbl_job = create_dividends_tgt_tbl(bq_client, tgt_ds_tbl)
+        if create_tgt_tbl_job.error_result:
+            err_msg = f"Error creating target table: {create_tgt_tbl_job.error_result}"
+            return Conflict(err_msg)
+        
         create_stg_tbl_job = create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
         if create_stg_tbl_job.error_result:
             err_msg = f"Error creating {stg_ds_tbl} staging table: {create_stg_tbl_job.error_result}"
@@ -44,6 +49,33 @@ def load_main(df_or_uri, load_stg_tbl_func, tgt_ds_tbl, stg_ds_tbl, logger: GCPL
         return True
     
     return False
+
+def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, partition_col: str | None = "", *cluster_cols: str):
+    optional_clause = ""
+    if partition_col is not None:
+        partition_col.strip()
+        optional_clause = f"PARTITIONED BY {partition_col.strip()}"
+    if not cluster_cols:
+        cluster_cols_str = ", ".join( col.strip() for col in cluster_cols )
+        optional_clause += f"CLUSTER BY ({cluster_cols_str})"
+    create_tbl_query = \
+        f"""
+            CREATE TABLE IF NOT EXISTS {ds_tbl} (
+                symbol STRING,
+                market_dt DATE,
+                dividend_ratio DOUBLE,
+                distr_freq STRING,
+                payment_dt DATE,
+                record_dt DATE,
+                declar_dt DATE
+            )  
+            {optional_clause}
+        """
+    
+    create_tbl_query_job = bq_client.query(create_tbl_query)
+    create_tbl_query_job.result()
+    
+    return create_tbl_query_job
 
 def create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl):
     if "." not in tgt_ds_tbl or "." not in stg_ds_tbl: logging.error(f"create_stg_tbl was not provided tgt_ds_tbl and stg_ds_tbl parameter's with dataset and table names as such 'ds_nm.tbl_nm' ")
