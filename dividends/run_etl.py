@@ -235,7 +235,7 @@ if __name__ == "__main__":
     kwargs: dict[str, dict[str, str]] = {
         "manual_override_dates": {
             "batch_dt": "2026-03-16",
-            "start_dt": "2025-03-13",
+            "start_dt": "2023-01-05",
             "end_dt"  : "2026-03-13"
         }
     }
