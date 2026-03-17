@@ -1,196 +1,166 @@
-# 📊 ETL Data Pipeline
+# 📊 Financial Data ETL Pipeline
 
-A cloud-native ETL pipeline for ingesting, transforming, and loading market data into a structured data warehouse.
-
----
+A cloud-native ETL pipeline for ingesting, transforming, and loading market/dividend data into a structured data warehouse.
 
 ## 🚀 Overview
 
 This pipeline automates the full data lifecycle:
 
-* **Extract**: Pulls raw market data from an external API
-* **Transform**: Cleans and standardizes data
-* **Load**: Writes data into partitioned warehouse tables
+* **Extract**: Pulls raw market/dividend data via API
+* **Transform**: Cleans, validates, and standardizes data
+* **Load**: Writes data into partitioned BigQuery tables
 
-Designed for **batch processing**, **idempotency**, and **scalability**.
-
----
+Designed for **weekly batch processing**, **idempotency**, and **scalability**.
 
 ## 🏗️ Architecture
 
 ```
-API → Cloud Storage → Staging Tables → Merge → Final Tables
+       +---------+       +------------------+       +----------------+
+       |  API    |  -->  | shared.clients   |  -->  | dividends/etl  |
+       +---------+       +------------------+       +-------+--------+
+                                                        |       |
+                                                        v       v
+                                                      extract  transform
+                                                        |       |
+                                                        +-------+
+                                                            |
+                                                            v
+                                                          load
+                                                            |
+                                                            v
+                                                       BigQuery
 ```
-
----
 
 ## 🛠️ Tech Stack
 
-* **Python 3.11**
-* **Google Cloud Platform (GCP)**
+* Python 3.11
+* Google Cloud Platform (GCP)
 
-  * Cloud Storage
   * BigQuery
+  * Cloud Storage
   * Cloud Run
   * Cloud Scheduler
-* **Docker**
-
----
+* Docker
 
 ## 📂 Project Structure
 
 ```
-├── src/
-│   ├── extract/
-│   ├── transform/
-│   ├── load/
-│   └── utils/
-├── configs/
-├── scripts/
-├── Dockerfile
-├── requirements.txt
-└── README.md
+shared/
+├── clients/        # API clients (GCP, MarketStack)
+├── configs/        # Config files and loader
+└── misc/           # Metadata & utilities
+dividends/
+├── etl/
+│   ├── extract/    # Extractors
+│   ├── transform/  # Transformers
+│   └── load/       # Loaders & mergers
+└── run_etl.py      # Entry point
+scripts/            # Helper & deployment scripts
+cloudbuild.yaml     # Cloud Build config
+cloudrun.yaml       # Cloud Run deployment config
+Dockerfile          # Application containerization
+requirements.txt    # Required packages
+README.md
 ```
-
----
 
 ## ⚙️ Setup (Python 3.11)
 
-### 1. Ensure Python 3.11 is installed
+1. Ensure Python 3.11 is installed:
 
 ```bash
 python3.11 --version
 ```
 
----
-
-### 2. Clone the repo
+2. Clone the repo:
 
 ```bash
 git clone <your-repo-url>
 cd <repo-name>
 ```
 
----
-
-### 3. Create virtual environment (Python 3.11)
+3. Create virtual environment:
 
 ```bash
 python3.11 -m venv venv
-```
-
-Activate:
-
-```bash
 source venv/bin/activate      # Mac/Linux
 venv\Scripts\activate         # Windows
 ```
 
----
-
-### 4. Upgrade pip (recommended)
+4. Upgrade pip:
 
 ```bash
 pip install --upgrade pip
 ```
 
----
-
-### 5. Install dependencies
+5. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
 ## 🔐 Environment Configuration
 
-Minimal environment setup:
+Minimal `.env`:
 
 ```
 ENVIRONMENT=dev | prod
 ```
 
-* `dev` → local execution
-* `prod` → Cloud Run environment
-
-Configuration logic is handled via the `configs/` module.
-
----
+* `dev` → local development + Cloud Run
+* `prod` → Cloud Run / production environment - ## TODO: Create with Terraform ##
+* Configuration handled via `shared/configs/config_loader.py`
 
 ## ▶️ Running the Pipeline
 
-Run the full pipeline:
+Run the full ETL:
 
 ```bash
-python -m src.main
+python -m dividends.run_etl
 ```
-
----
 
 ## 🗓️ Scheduling
 
-* Runs as a **weekly batch job**
-* Triggered via **Cloud Scheduler → Cloud Run**
-* Processes **date-bounded batches (Mon–Fri)**
-
----
+* Scheduled as a **weekly batch job**
+* Triggered via **Cloud Scheduler → Cloud Run** ## TODO: Cloud Scheduler ##
+* Processes data in **date-bounded batches** (Mon–Fri)
 
 ## 📈 Data Design
 
-* Partitioned tables (by date)
-* Incremental ingestion
+* Partitioned tables (by market date)
+* Clustering (by symbol/company)
+* Incremental loads
 * Merge-based upserts
-* Optimized for analytical queries
-
----
+* Optimized for analytics and query performance
 
 ## 🚢 Deployment
 
-### Build Docker image
+Build Docker image:
 
 ```bash
 docker build -t etl-pipeline .
 ```
 
-### Deploy to Cloud Run
+Deploy to Cloud Run:
 
-```bash
-gcloud run deploy etl-service \
-  --image gcr.io/<project-id>/etl-pipeline \
-  --platform managed
-```
+### TODO: Create with Terraform ##
 
----
 
 ## ⚠️ Notes
 
-* Python version locked to **3.11**
-* No sensitive credentials stored in repo
-* Requires appropriate IAM roles for:
-
-  * BigQuery
-  * Cloud Storage
-* Pipeline supports safe re-runs (idempotent design)
-
----
+* Python version locked to 3.11
+* Ensure proper IAM roles for BigQuery and Cloud Storage
+* Pipeline supports idempotent re-runs ## TODO: retries at 0 for now ##
 
 ## 📌 Future Improvements
 
+* Cloud Scheduler addition
+* Terraform (IaC) addition for production environment deployment
 * Data quality validation checks
 * Monitoring & alerting
-* CI/CD pipeline integration
+* CI/CD integration
 * Backfill automation
-
----
 
 ## 👤 Author
 
 Sohum Patel
 
----
-
-## 📄 License
-
-MIT License
