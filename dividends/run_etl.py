@@ -39,6 +39,7 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
         raise Exception(f"{data_cat} is not an approved")
     # Define parameters for the ETL process
     symbols_lst = MS_SYMBOLS_LST # Sort the symbols list for consistent ordering
+    estimated_row_cnt = len(symbols_lst) * 5
     
     # get last processed date for the data category from the database
     # TODO
@@ -88,6 +89,7 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
         raw_blob_path, raw_blob_nm, raw_bucket_nm, _, _ = raw_gcs_path_obj.getVars()
         
         raw_json = None
+        raw_json_row_cnt = 0
         raw_file_exists = check_blob_exists(raw_bucket_nm, raw_blob_nm)
         
         gcp_logger.info(f"raw_file_exists: {raw_file_exists}")
@@ -125,10 +127,12 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
             
             gcp_logger.info(f"SUCCESS: Raw data saved to: {raw_file_path}")
             
-        if raw_json is None:
-            err_msg = "ERROR: Extraction failed and/or no data returned from API."
-            gcp_logger.error(err_msg)
-            return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+        if "data" not in raw_json:
+                err_msg = f"ERROR: Raw {MS_RAW_FILE_TYPE} file does not contain 'data' key."
+                gcp_logger.error(err_msg)
+                return http_return(HTTP_SERVER_ERR_CODE, err_msg)
+        
+        raw_json_row_cnt = len(raw_json["data"])
         
         gcp_logger.info("******** Extraction process completed ********")
         
@@ -181,6 +185,8 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
             
             gcp_logger.info(f"SUCCESS: Transformed file saved to: {tfd_file_path}")
         
+        tfd_df_row_cnt = len(tfd_df)
+        
         gcp_logger.info("********  Transformation process completed  ********")    
         
         # TRANSFORMATION SUCCEEDED
@@ -223,6 +229,15 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
         
         # LOADING SUCCEEDED
         ####################    ETL PROCESS SUCCEEDED    ####################
+        
+        # Row count logging
+        gcp_logger.info(f"estimated_row_cnt:   {estimated_row_cnt}")
+        gcp_logger.info(f"raw_json_row_cnt:    {raw_json_row_cnt}")
+        gcp_logger.info(f"tfd_df_row_cnt:      {tfd_df_row_cnt}")
+        gcp_logger.info(f"load_tbl_cnt:        VAR UNDEFINED")
+        gcp_logger.info(f"merge_tbl_prior_cnt: VAR UNDEFINED")
+        gcp_logger.info(f"merge_tbl_after_cnt: VAR UNDEFINED")
+        gcp_logger.info("NOTE: estimated_row_cnt does not take into account for holidays/non-market dates")
         
         success_msg = f"********  ETL process for {data_cat.upper()} completed  ********"
         gcp_logger.info(success_msg)
