@@ -1,0 +1,26 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: ms-cloudrun-etl-job
+spec:
+  template:
+    spec:
+      template:
+        spec:
+          serviceAccountName: ms-cloudrun-etl-sa
+          containers:
+            - name: ms-etl-container
+              image: IMAGE_PLACEHOLDER
+              command: ["python"]
+              args: ["dividends/run_etl.py"]
+              env:
+                - name: PROJECT_ID
+                  value: PROJECT_ID_PLACEHOLDER
+                - name: ENVIRONMENT
+                  value: ENVIRONMENT_PLACEHOLDER
+              resources:
+                limits:
+                  cpu: "2"
+                  memory: "512Mi"
+          timeoutSeconds: 1800
+          maxRetries: 0
