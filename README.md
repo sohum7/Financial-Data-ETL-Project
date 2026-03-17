@@ -1,58 +1,196 @@
-# Financial-Data-ETL-Project
-## Table of Contents
-#TODO
+# 📊 ETL Data Pipeline
 
-## Overview
-Google Cloud Platform (GCP) is the cloud service provider (csp) utilized for this project.
-Services used: 
-## Architecture
-Google Cloud Platform (GCP) is the cloud service provider (csp) utilized for this project.
-Cloud Run will be used for running the docker based ETL pipeline
+A cloud-native ETL pipeline for ingesting, transforming, and loading market data into a structured data warehouse.
 
-## RESPONSILBITIES
+---
 
-### extraction
-extractor.py
-    input(s):
-        symbols, batch date, start date, end date
-    output(s):
-        gcs file path to raw json
-    purpose:
-        submits api request
-        returns the data as a json
-        file name: {data category}_{start date}_{end date}_{hash of symbols}.json
+## 🚀 Overview
 
-### transformation
-transformer.py
-    input(s):
-        gcs file path to raw json
-    output(s):
-        df
-    purpose:
-        remove non-data and metadata fields
-        transforms the data
-            date fields and formatting
-            null/missing data
-            reordering fields
+This pipeline automates the full data lifecycle:
 
-### loading part 1
-loader.py
-    input(s):
-        df
-    output(s):
-        staging table with data from DataFrame
-    purpose:
-        loads data into staging table
+* **Extract**: Pulls raw market data from an external API
+* **Transform**: Cleans and standardizes data
+* **Load**: Writes data into partitioned warehouse tables
 
-### loading part 2
-merger.py
-    input(s):
-        staging table
-    insert into:
-        main table
-    purpose:
-        merges the staging table into the main table
-        drop staging table? or via retention policy?
+Designed for **batch processing**, **idempotency**, and **scalability**.
 
-Cloud Scheduler
-    run the etl with the docker image
+---
+
+## 🏗️ Architecture
+
+```
+API → Cloud Storage → Staging Tables → Merge → Final Tables
+```
+
+---
+
+## 🛠️ Tech Stack
+
+* **Python 3.11**
+* **Google Cloud Platform (GCP)**
+
+  * Cloud Storage
+  * BigQuery
+  * Cloud Run
+  * Cloud Scheduler
+* **Docker**
+
+---
+
+## 📂 Project Structure
+
+```
+├── src/
+│   ├── extract/
+│   ├── transform/
+│   ├── load/
+│   └── utils/
+├── configs/
+├── scripts/
+├── Dockerfile
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## ⚙️ Setup (Python 3.11)
+
+### 1. Ensure Python 3.11 is installed
+
+```bash
+python3.11 --version
+```
+
+---
+
+### 2. Clone the repo
+
+```bash
+git clone <your-repo-url>
+cd <repo-name>
+```
+
+---
+
+### 3. Create virtual environment (Python 3.11)
+
+```bash
+python3.11 -m venv venv
+```
+
+Activate:
+
+```bash
+source venv/bin/activate      # Mac/Linux
+venv\Scripts\activate         # Windows
+```
+
+---
+
+### 4. Upgrade pip (recommended)
+
+```bash
+pip install --upgrade pip
+```
+
+---
+
+### 5. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🔐 Environment Configuration
+
+Minimal environment setup:
+
+```
+ENVIRONMENT=dev | prod
+```
+
+* `dev` → local execution
+* `prod` → Cloud Run environment
+
+Configuration logic is handled via the `configs/` module.
+
+---
+
+## ▶️ Running the Pipeline
+
+Run the full pipeline:
+
+```bash
+python -m src.main
+```
+
+---
+
+## 🗓️ Scheduling
+
+* Runs as a **weekly batch job**
+* Triggered via **Cloud Scheduler → Cloud Run**
+* Processes **date-bounded batches (Mon–Fri)**
+
+---
+
+## 📈 Data Design
+
+* Partitioned tables (by date)
+* Incremental ingestion
+* Merge-based upserts
+* Optimized for analytical queries
+
+---
+
+## 🚢 Deployment
+
+### Build Docker image
+
+```bash
+docker build -t etl-pipeline .
+```
+
+### Deploy to Cloud Run
+
+```bash
+gcloud run deploy etl-service \
+  --image gcr.io/<project-id>/etl-pipeline \
+  --platform managed
+```
+
+---
+
+## ⚠️ Notes
+
+* Python version locked to **3.11**
+* No sensitive credentials stored in repo
+* Requires appropriate IAM roles for:
+
+  * BigQuery
+  * Cloud Storage
+* Pipeline supports safe re-runs (idempotent design)
+
+---
+
+## 📌 Future Improvements
+
+* Data quality validation checks
+* Monitoring & alerting
+* CI/CD pipeline integration
+* Backfill automation
+
+---
+
+## 👤 Author
+
+Sohum Patel
+
+---
+
+## 📄 License
+
+MIT License
