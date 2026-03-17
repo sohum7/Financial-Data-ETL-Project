@@ -1,0 +1,12 @@
+.vscode/
+.env
+*.env
+venv/
+.venv
+.venv.nosync
+__pycache__/
+*.pyc
+spark-3.5.0-bin-hadoop3-scala2.13
+scripts
+tmp_bashrc
+.DS_Store
