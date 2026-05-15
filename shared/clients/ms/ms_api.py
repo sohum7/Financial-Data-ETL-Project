@@ -1,6 +1,7 @@
 # Main extractor logic for various data categories
 
 # Built-in imports
+from dataclasses import dataclass
 from datetime import datetime
 from json import JSONDecodeError
 from requests import get as requests_get
@@ -10,7 +11,28 @@ from requests.exceptions import HTTPError, RequestException
 #from shared.clients.gcp.logging import GCPLogger
 
 
-def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
+@dataclass
+class MSAPILib:
+    data_cat: str
+    base_url: str
+    symbols_lst_str: str
+    api_key: str
+    batch_dt: str
+    start_dt: str
+    end_dt: str
+    
+    def __post_init__(self):
+        self.data_cat = self.data_cat.lower()
+        self.base_url = self.base_url.rstrip("/")
+        
+        #something for batch start and end dates (like conversions and validations)
+    
+    def url_without_params(self):
+        return f"{self.base_url}/{self.data_cat}"
+
+
+
+def ms_api_request(data_cat: str, base_url: str, symbols_lst_str: str, api_key: str, batch_dt: str, start_dt: str, end_dt: str, logger, **kwargs):
     # Chck if valid url    
     max_req_rows = kwargs.get("min_rows", 5*len(symbols_lst_str))  # Default to 5 rows per symbol if not provided
     req_limit = kwargs.get("limit", max_req_rows)
@@ -26,7 +48,7 @@ def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_
         "sort": sort_type
     }
     
-    full_url = data_cat_url
+    full_url = ms_url_constructor(base_url, data_cat)
     logger.info(f"Constructed API URL: {full_url} w/ params: {req_params}")
     
     msg = ""
@@ -48,7 +70,7 @@ def ms_api_request(data_cat_url: str, symbols_lst_str: str, api_key: str, batch_
         msg = f"FAILED: API extraction - an unexpected error occurred: {e}"
     else:
         # Extraction from Marketstack API succeeded
-        msg = f"SUCCESS: Data extracted from Marketstack API and JSON decoded successfully from....\n{data_cat_url}\nbatch date: {batch_dt}\nstart date: {start_dt}\nend date: {end_dt}"
+        msg = f"SUCCESS: Data extracted from Marketstack API and JSON decoded successfully from....\n{full_url}\nbatch date: {batch_dt}\nstart date: {start_dt}\nend date: {end_dt}"
         logger.info(msg)
         return resp_json
     

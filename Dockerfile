@@ -20,8 +20,8 @@ RUN pip install --upgrade pip \
 # Copy application code (this invalidates cache only when code changes)
 COPY . .
 
-# Ensure Python can see shared modules
-ENV PYTHONPATH=/app
+# Ensure Python can see shared and etl modules
+ENV PYTHONPATH=/app:/app/dividends
 
 # Run ETL
 CMD ["python", "-m", "dividends.run_etl"]

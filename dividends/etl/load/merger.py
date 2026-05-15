@@ -10,27 +10,15 @@ from google.cloud import bigquery as gc_bigquery
 
 
 
-def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> bool:
-    try:
-        bq_client = gc_bigquery.Client()
-        
-        merge_stg_to_tgt_tbl_job = merge_stg_to_tgt_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
-        if merge_stg_to_tgt_tbl_job.errors:
-            err_msg = f"Error merging staging to target table: {merge_stg_to_tgt_tbl_job.error_result}"
-            raise Conflict(err_msg)
-            
-    except Conflict as e:
-        logger.error(e.message)
-    except Exception as e:
-        err_msg = f"Error merging data from staging to target table in BigQuery"
-        logger.error(err_msg)
-    else: 
-        return True
+def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> None:
+    # Initialize BigQuery client
+    bq_client = gc_bigquery.Client()
     
-    return False
+    # Merge data from staging to target table
+    merge_stg_to_tgt_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl, logger)
 
-
-def merge_stg_to_tgt_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_tbl: str) -> gc_bigquery.QueryJob:
+def merge_stg_to_tgt_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> gc_bigquery.QueryJob:
+    # Merge staging table to target tablequery
     merge_tbls_query = \
         f"""
             MERGE INTO {tgt_ds_tbl} AS target
@@ -49,8 +37,15 @@ def merge_stg_to_tgt_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_
             VALUES (staging.symbol, staging.market_dt, staging.payment_dt, staging.record_dt, staging.declar_dt, staging.dividend_ratio);
         """
     
+    # Execute the merge query and wait for it to complete
     merge_tbls_query_job = bq_client.query(merge_tbls_query)
     merge_tbls_query_job.result()
+    
+    # Check for errors in the merge query job and raise an exception if any are found
+    if merge_tbls_query_job.errors:
+        err_msg = f"Error merging staging to target table: {merge_tbls_query_job.error_result}"
+        logger.error(err_msg)
+        raise Conflict(err_msg)
     
     return merge_tbls_query_job
 

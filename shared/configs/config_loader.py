@@ -56,7 +56,7 @@ def main(data_cat="dividends"):
     # Load configuration and environment variables
     global config, env_vars, \
         GC_PROJECT_ID, GC_ENV, \
-        MS_CAT, MS_CAT_URL, MS_V2_API_KEY, MS_BASE_URL, \
+        MS_CAT, MS_BASE_URL_V2, MS_V2_API_KEY, \
         MS_SYMBOLS_LST, MS_DATA_CTGYS_LST, \
         MS_TGT_DATASET_NM, MS_TGT_TBL_NM, \
         MS_STG_DATASET_NM, MS_STG_TBL_NM, \
@@ -77,8 +77,8 @@ def main(data_cat="dividends"):
     MS_CAT = ms_cat_cfg["name"]
     MS_SYMBOLS_LST = [symbol.strip() for symbol in ms_cfg["symbols"].split(",")]
     MS_DATA_CTGYS_LST = [data_cat.strip() for data_cat in ms_cfg["data_ctgys"].split(",")]
-    MS_BASE_URL = ms_cfg["base_url"]
-    MS_CAT_URL = f"{MS_BASE_URL}{'' if MS_BASE_URL.endswith('/') else '/'}{MS_CAT.lower()}"
+    MS_BASE_URL_V2 = ms_cfg["base_url"]
+    #MS_CAT_URL = f"{MS_BASE_URL_V2}{'' if MS_BASE_URL_V2.endswith('/') else '/'}{MS_CAT.lower()}"
     
     ## Extract source data
     MS_RAW_FILE_TYPE = ms_cat_cfg["raw_file_type"]

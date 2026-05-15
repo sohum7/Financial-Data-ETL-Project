@@ -49,8 +49,6 @@ class GCSPathLib:
     
     def file_nm(self, include_type=True):
         return f"{self.name}{f'.{self.type}' if include_type else ''}"
-    def file_type(self):
-        return self.type
     def blob_nm(self):
         return f"{self.dir}/{self.file_nm(include_type=True)}"
     def blob_path(self, include_prefix=True):
@@ -60,5 +58,7 @@ class GCSPathLib:
     def blob_path_static(bucket_nm, blob_nm, include_prefix=True):
         bp = f"{bucket_nm.strip('/')}/{blob_nm.strip('/')}"
         return GCSPathLib._gcs_prefix + bp if include_prefix else bp
+    def bucket_blob_nms(self):
+        return self.bucket, self.blob_nm()
     def getVars(self):
         return self.blob_path(include_prefix=True), self.blob_nm(), self.bucket, self.dir, self.file_nm(include_type=True)

@@ -2,8 +2,12 @@
 
 # Built-in imports
 from datetime import datetime, date, timedelta
+import logging
 
-def get_past_week_range(reference_date: date | None=None):
+# Shared imports
+from shared.clients.gcp.logging import GCPLogger
+
+def get_past_week_range(reference_date: date | None=None) -> tuple[str, str, str]:
     if reference_date is None:
         reference_date = date.today()
     if not isinstance(reference_date, date):
@@ -21,7 +25,7 @@ def get_past_week_range(reference_date: date | None=None):
     
     return reference_date.strftime("%Y-%m-%d"), last_sunday.strftime("%Y-%m-%d"), last_saturday.strftime("%Y-%m-%d")
 
-def http_return(http_code: int, msg: str= ""):
+def http_return(http_code: int, msg: str= "") -> tuple[dict[str, str], int]:
     if 200 < http_code < 299:
         return {"status": "success", "message": msg}, http_code
     elif 400 < http_code < 499:
@@ -30,3 +34,15 @@ def http_return(http_code: int, msg: str= ""):
         return {"status": "error", "message": msg}, http_code
     
     return {"status": "unknown", "message": msg}, http_code
+
+def dict_to_logs(input_dict: dict, logger: logging.Logger | GCPLogger) -> None:
+    def find_max_key_len(d: dict) -> int:
+        max_len = 0
+        for key in d.keys():
+            max_len = max(max_len, len(key))
+        return max_len
+    
+    max_key_len = find_max_key_len(input_dict)
+    
+    for key, value in input_dict.items():
+        logger.info(f"{key}:{' '*(max_key_len - len(key))} {value}")
