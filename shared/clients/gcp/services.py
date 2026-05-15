@@ -187,7 +187,7 @@ def read_parquet_gcs(bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPL
     return pd.read_parquet(buffer, engine=read_parquet_eng_type)
 
 # Write parquet from gcs path
-def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_cols: Sequence[Hashable], logger: logging.Logger | GCPLogger) -> str:
+def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPLogger) -> str:
     """_summary_
 
     Args:
@@ -207,6 +207,7 @@ def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_
     """
     blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
     save_type = "octet-stream"
+    engine_type = "pyarrow"
     
     # Get blob resources such as blob object to interact with the file
     _, _, blob_obj = get_blob_resources(bucket_nm, blob_nm)
@@ -214,7 +215,7 @@ def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, partition_
     # Write the DataFrame to a bytes buffer in parquet format
     logger.info(f"Writing DataFrame to parquet buffer for blob: {blob_path}")
     buffer = BytesIO()
-    df.to_parquet(buffer, index=False, partition_cols=partition_cols)
+    df.to_parquet(buffer, index=False, engine=engine_type)
     buffer.seek(0)
     
     # Upload the parquet data from the buffer to the blob with the appropriate content type
