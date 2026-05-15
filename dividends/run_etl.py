@@ -153,7 +153,7 @@ def run_pipeline(data_cat, full_refresh=False, **kwargs):
 
 
 if __name__ == "__main__":
-    full_refresh = True
+    full_refresh = False
     
     kwargs: dict[str, dict[str, str]] = {
         "manual_override_dates": {

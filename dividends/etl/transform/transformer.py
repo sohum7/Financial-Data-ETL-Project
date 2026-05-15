@@ -23,7 +23,7 @@ def transform(raw_json: list[dict], gcs_path_obj: GCSPathLib, full_refresh: bool
         raw_df = list_to_df(raw_json, logger)
         tfd_df, transform_metrics = transform_main(raw_df, logger)
         metrics.update(transform_metrics)
-        write_parquet_gcs(tfd_df, bucket_nm, blob_nm, "market_dt", logger)
+        write_parquet_gcs(tfd_df, bucket_nm, blob_nm, logger)
     
     return tfd_df, metrics
 
