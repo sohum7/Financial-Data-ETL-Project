@@ -3,9 +3,6 @@
 # Built-in imports
 from dataclasses import dataclass
 
-# Google API imports
-from google.cloud import bigquery as bq
-
 
 @dataclass(slots=True, frozen=True)
 class PartitionConfig:

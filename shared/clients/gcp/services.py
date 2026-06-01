@@ -44,7 +44,7 @@ def create_target_table(tgt_ds: str, tgt_table: str, col_metadata: list[tuple[st
         raise ValueError("ERROR: Unsupported partition type. REASON: Date partition fields only.")
     
     # Add clustering clauses to the create table query if the respective parameter is provided
-    optional_clause += f" CLUSTER BY {", ".join(clust_cols)}" if clust_cols is not None else ""
+    optional_clause += f" CLUSTER BY {', '.join(clust_cols)}" if clust_cols is not None else ""
     
     create_tbl_query: str = \
         f"""
