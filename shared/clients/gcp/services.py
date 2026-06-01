@@ -3,241 +3,258 @@
 # Built-in imports
 from io import BytesIO
 from json import dumps as json_dumps, loads as json_loads
-import logging
-import pandas as pd
-from typing import Sequence, Hashable
+from pandas import DataFrame, read_parquet as pandas_read_parquet
 
 # Shared imports
-from shared.clients.gcp.naming_conv import GCSPathLib
-from shared.clients.gcp.logging import GCPLogger
+from shared.clients.gcp.gcs import FileConfig
 
 # Google API imports
-from google.cloud import bigquery as gc_bq
-from google.cloud import storage as gc_storage
+from google.cloud import bigquery as bq
+from google.cloud import storage as gcs
+from google.api_core.exceptions import Conflict as ConflictError
 
-# Get ....
-def create_dataset(dataset_id: str, location: str, logger: logging.Logger | GCPLogger) -> tuple[gc_bq.Client, gc_bq.Dataset] :
-    """_summary_
+
+
+############################## BigQuery Services ##############################
+
+def create_target_table(tgt_ds: str, tgt_table: str, col_metadata: list[tuple[str, ...]], part_col: str | None, part_gran: str | None, clust_cols: list[str] | None) -> None:
+    """Creates the target/main table
+    
+    Args:
+        bq_client (bq.Client): BigQuery Client object
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        part_col (str | None): Partition columns for the target table
+        clust_cols (list[str] | None):
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
+    
+    Returns: None
+    """
+    bq_client: bq.Client = bq.Client()
+    
+    tgt_ds_tbl: str = f"{tgt_ds}.{tgt_table}"
+    optional_clause: str = ""
+    
+    # Create table with data types/constraints
+    create_tbl_clause = ", ".join(" ".join(col) for col in col_metadata)
+    
+    # Add partitioning to the create table query if the respective parameter is provided
+    if part_col is not None and part_gran is not None:
+        optional_clause = f" PARTITION BY DATE_TRUNC({part_col}, {part_gran})"
+    else: 
+        raise ValueError("ERROR: Unsupported partition type. REASON: Date partition fields only.")
+    
+    # Add clustering clauses to the create table query if the respective parameter is provided
+    optional_clause += f" CLUSTER BY {", ".join(clust_cols)}" if clust_cols is not None else ""
+    
+    create_tbl_query: str = \
+        f"""
+            CREATE TABLE IF NOT EXISTS {tgt_ds_tbl} (
+                {create_tbl_clause}
+            )  
+            {optional_clause}
+        """
+    
+    # Run create table query and wait for it to finish
+    create_tbl_query_job: bq.QueryJob = bq_client.query(create_tbl_query)
+    create_tbl_query_job.result()
+    
+    # Log errors and raise exception
+    if create_tbl_query_job.error_result:
+        err_msg: str = create_tbl_query_job.error_result.get("message", "Unknown error")
+        err_reason: str = create_tbl_query_job.error_result.get("reason", "Unknown reason for error")
+        
+        raise ConflictError(f"ERROR: {err_msg} - REASON: {err_reason}")
+
+def create_staging_table(tgt_ds: str, tgt_table: str, stg_ds: str, stg_table: str) -> None:
+    """Creates the dividend category's staging/temp table
+    
+    Args:
+        bq_client (bq.Client): BigQuery Client object
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
+    
+    Returns: None
+    """
+    tgt_ds_tbl: str = f"{tgt_ds}.{tgt_table}"
+    stg_ds_tbl: str = f"{stg_ds}.{stg_table}"
+    
+    bq_client: bq.Client = bq.Client()
+    
+    # Create or replace staging table query w/ same schema as target table
+    create_tbl_query: str = \
+        f"""
+            CREATE OR REPLACE TABLE {stg_ds_tbl} 
+            AS 
+            SELECT * FROM {tgt_ds_tbl} WHERE 1 = 0 
+        """
+    
+    # Run create table query and wait for it to finish
+    create_tbl_query_job: bq.QueryJob = bq_client.query(create_tbl_query)
+    create_tbl_query_job.result()
+    
+    # Log errors and raise exception
+    if create_tbl_query_job.error_result:
+        err_msg: str = create_tbl_query_job.error_result.get("message", "Unknown error")
+        err_reason: str = create_tbl_query_job.error_result.get("reason", "Unknown reason for error")
+        
+        raise ConflictError(f"ERROR: {err_msg} - REASON: {err_reason}")
+
+def load_table(df: DataFrame, ds: str, table: str, write_disp: str) -> None:
+    """Loads transformed relational data into a staging/temp table
 
     Args:
-        dataset_id (str): _description_
-        location (str): _description_
-        logger (logging.Logger | GCPLogger): _description_
+        df (DataFrame): Transformed Pandas DataFrame
+        bq_client (bq.Client): BigQuery Client object
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
 
-    Returns:
-        tuple[gc_bq.Client, gc_bq.Dataset]: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: If credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.Conflict: If the dataset already exists.
+    Returns: None
     """
     
-    bq_client = gc_bq.Client()  # Uses default project
-    full_dataset_id = f"{bq_client.project}.{dataset_id}"
+    job_config: bq.LoadJobConfig = bq.LoadJobConfig(write_disposition=write_disp)
+    stg_ds_tbl: str = f"{ds}.{table}"
     
-    bq_dataset = gc_bq.Dataset(full_dataset_id)
-    bq_dataset.location = location
+    bq_client: bq.Client = bq.Client()
     
-    # Create dataset if it does not exist (exists_ok=True avoids error if it exists)
-    logger.info(f"Creating dataset if it does not exist: {full_dataset_id} in location: {location}")
-    bq_dataset = bq_client.create_dataset(bq_dataset, exists_ok=True)
+    # Load data from the provided pandas DataFrame to the staging table and wait for the load job to finish
+    load_tbl_query_job: bq.LoadJob = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config=job_config)
+    load_tbl_query_job.result()
     
-    logger.info(f"Dataset created or already exists: {full_dataset_id} in location: {location}")
-    return bq_client, bq_dataset
+    # Log errors and raise exception
+    if load_tbl_query_job.error_result:
+        err_msg = load_tbl_query_job.error_result.get("message", "Unknown error")
+        err_reason = load_tbl_query_job.error_result.get("reason", "Unknown reason for error")
+        
+        raise ConflictError(f"ERROR: {err_msg} - REASON: {err_reason}")
 
-# Get ....
-def get_blob_resources(bucket_nm: str, blob_nm: str) -> tuple[gc_storage.Client, gc_storage.Bucket, gc_storage.Blob]:
-    """_summary_
+def merge_table(tgt_ds: str, tgt_table: str, stg_ds: str, stg_table: str, all_cols: list[str], join_cols: list[str]) -> None:
+    """Merge staging/temp table into target table while ensuring duplicate records are not inserted
 
     Args:
-        bucket_nm (str): _description_
-        blob_nm (str): _description_
+        bq_client (bq.Client): BigQuery Client object
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
 
-    Returns:
-        tuple[gc_storage.Client, gc_storage.Bucket, gc_storage.Blob]: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: If credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.GoogleAPICallError: If the API request fails for any reason.
-
+    Returns: None
     """
-    storage_client_obj = gc_storage.Client()
+    
+    tgt_ds_tbl: str = f"{tgt_ds}.{tgt_table}"
+    stg_ds_tbl: str = f"{stg_ds}.{stg_table}"
+    
+    bq_client: bq.Client = bq.Client()
+    
+    # Required clause values for merging properly and ensuring no duplicates
+    join_clause = " AND ".join(f"target.{col} = staging.{col}" for col in join_cols)
+    update_clause  = ", ".join(f"target.{col} = staging.{col}" for col in all_cols if col not in join_cols)
+    insert_columns = ", ".join(all_cols)
+    insert_values  = ", ".join(f"staging.{col}" for col in all_cols)
+    
+    merge_tbls_query = \
+        f"""
+            MERGE INTO `{tgt_ds_tbl}` AS target
+            USING `{stg_ds_tbl}` AS staging
+            ON {join_clause}
+            WHEN MATCHED THEN
+            UPDATE SET {update_clause}
+            WHEN NOT MATCHED THEN
+            INSERT ({insert_columns})
+            VALUES ({insert_values});
+        """
+    
+    # Execute the merge query and wait for it to complete
+    merge_tbls_query_job: bq.QueryJob = bq_client.query(merge_tbls_query)
+    merge_tbls_query_job.result()
+    
+    # Log errors and raise exception
+    if merge_tbls_query_job.error_result:
+        err_msg = merge_tbls_query_job.error_result.get("message", "Unknown error")
+        err_reason = merge_tbls_query_job.error_result.get("reason", "Unknown reason for error")
+        
+        raise ConflictError(f"ERROR: {err_msg} - REASON: {err_reason}")
+
+
+############################ Cloud Storage Services ############################
+
+
+def get_blob_obj(bucket_nm: str, blob_nm: str) -> gcs.Blob:
+    """Get blob object"""
+    
+    storage_client_obj = gcs.Client()
     bucket_obj = storage_client_obj.bucket(bucket_nm)
     blob_obj = bucket_obj.blob(blob_nm)
     
-    return storage_client_obj, bucket_obj, blob_obj
+    return blob_obj
 
-# Check if a blob exists
-def check_blob_exists(bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPLogger) -> bool:
-    """_summary_
-
-    Args:
-        bucket_nm (str): _description_
-        blob_nm (str): _description_
-        logger (logging.Logger | GCPLogger): _description_
-
-    Returns:
-        bool: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: Propagated if credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.GoogleAPICallError: Propagated if the API request fails for any reason.
-    """
-    _, _, blob_obj = get_blob_resources(bucket_nm, blob_nm)
-    blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
+def check_blob_exists(bucket_nm: str, blob_nm: str) -> bool:
+    """Check if a blob exists"""
     
-    logger.info(f"Checking if blob exists: {blob_path}")
-    logger.info(f"Blob exists: {blob_obj.exists()}")
+    blob_obj = get_blob_obj(bucket_nm, blob_nm)
+    blob_path = FileConfig.blob_path_static(bucket_nm, blob_nm)
     
     return blob_obj.exists()
 
-# Read json from gcs path
-def read_json_gcs(bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPLogger) -> dict[str, str] | None:
-    """_summary_
-
-    Args:
-        bucket_nm (str): _description_
-        blob_nm (str): _description_
-        logger (logging.Logger | GCPLogger): _description_
-
-    Returns:
-        dict[str, str] | None: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: Propagated if credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.GoogleAPICallError: Propagated if the API request fails for any reason.
-        json.JSONDecodeError: If the blob content cannot be parsed as JSON
-        TypeError: If the blob content is not a string or bytes-like object.
-    """
-    blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
+def read_json(bucket_nm: str, blob_nm: str) -> dict:
+    """Read json from gcs path"""
     
-    # Get blob resources such as blob object to interact with the file
-    _, _, blob_obj = get_blob_resources(bucket_nm, blob_nm)
+    blob_path = FileConfig.blob_path_static(bucket_nm, blob_nm)
+    blob_obj = get_blob_obj(bucket_nm, blob_nm)
     
-    # Download the blob content as text and parse it as JSON
-    logger.info(f"Reading blob content as text from: {blob_path}")
+    # Download the blob content as text
     content = blob_obj.download_as_text()
     
     return json_loads(content)
 
-# Write json from gcs path
-def write_json_gcs(data: dict, bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPLogger) -> str | None:
-    """_summary_
-
-    Args:
-        data (dict): _description_
-        bucket_nm (str): _description_
-        blob_nm (str): _description_
-        logger (logging.Logger | GCPLogger): _description_
-
-    Returns:
-        str | None: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: If credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.GoogleAPICallError: Propagated if the API request fails for any reason.
-        TypeError: If the data cannot be serialized to JSON.
-        ValueError: If the data contains non-serializable values.
-    """
-    blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
+def write_json(data: dict, bucket_nm: str, blob_nm: str) -> str:
+    """Write json from gcs path"""
+    
     file_type = "json"
     
-    # Get blob resources such as blob object to interact with the file
-    _, _, blob_obj = get_blob_resources(bucket_nm, blob_nm)
+    blob_path = FileConfig.blob_path_static(bucket_nm, blob_nm)
+    blob_obj = get_blob_obj(bucket_nm, blob_nm)
     
-    # Upload the JSON data as a string to the blob with the appropriate content type
-    logger.info(f"Uploading JSON data to blob: {blob_path}")
+    # Upload the JSON data as a string to the blob
     blob_obj.upload_from_string(
         json_dumps(data),
         content_type=f"application/{file_type}"
     )
     
-    return f"{blob_path}"
+    return blob_path
 
-# Read parquet from gcs path
-def read_parquet_gcs(bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPLogger) -> pd.DataFrame:
-    """_summary_
-
-    Args:
-        bucket_nm (str): _description_
-        blob_nm (str): _description_
-        logger (logging.Logger | GCPLogger): _description_
-
-    Returns:
-        pd.DataFrame: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: Propagated if credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.GoogleAPICallError: Propagated if the API request fails for any reason.
-        ....
-    """
-    blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
+def read_parquet(bucket_nm: str, blob_nm: str) -> DataFrame:
+    """Read parquet from gcs path"""
+    
     read_parquet_eng_type = "auto"
     
-    # Get blob resources such as blob object to interact with the file
-    _, _, blob_obj = get_blob_resources(bucket_nm, blob_nm)
+    blob_path = FileConfig.blob_path_static(bucket_nm, blob_nm)
+    blob_obj = get_blob_obj(bucket_nm, blob_nm)
     
-    # Download the blob content as bytes
-    logger.info(f"Downloading blob content as bytes from: {blob_path}")
+    # Download the blob content as bytes and store to buffer
     parquet_bytes = blob_obj.download_as_bytes()
     buffer = BytesIO(parquet_bytes)
     
     # Read bytes into a pandas DataFrame using the specified parquet engine
-    logger.info(f"Reading parquet data into DataFrame from blob: {blob_path} using engine: {read_parquet_eng_type}")
-    return pd.read_parquet(buffer, engine=read_parquet_eng_type)
+    return pandas_read_parquet(buffer, engine=read_parquet_eng_type)
 
-# Write parquet from gcs path
-def write_parquet_gcs(df: pd.DataFrame, bucket_nm: str, blob_nm: str, logger: logging.Logger | GCPLogger) -> str:
-    """_summary_
-
-    Args:
-        df (pd.DataFrame): _description_
-        bucket_nm (str): _description_
-        blob_nm (str): _description_
-        partition_cols (Sequence[Hashable]): _description_
-        logger (logging.Logger | GCPLogger): _description_
-
-    Returns:
-        str: _description_
-
-    Raises:
-        google.auth.exceptions.DefaultCredentialsError: If credentials is not specified and the library fails to acquire default credentials.
-        google.api_core.exceptions.GoogleAPICallError: Propagated if the API request fails for any reason.
-        ....
-    """
-    blob_path = GCSPathLib.blob_path_static(bucket_nm, blob_nm)
+def write_parquet(df: DataFrame, bucket_nm: str, blob_nm: str) -> str:
+    """Write parquet from gcs path"""
+    
     save_type = "octet-stream"
     engine_type = "pyarrow"
     
-    # Get blob resources such as blob object to interact with the file
-    _, _, blob_obj = get_blob_resources(bucket_nm, blob_nm)
+    blob_path = FileConfig.blob_path_static(bucket_nm, blob_nm)
+    blob_obj = get_blob_obj(bucket_nm, blob_nm)
     
-    # Write the DataFrame to a bytes buffer in parquet format
-    logger.info(f"Writing DataFrame to parquet buffer for blob: {blob_path}")
     buffer = BytesIO()
     df.to_parquet(buffer, index=False, engine=engine_type)
     buffer.seek(0)
     
-    # Upload the parquet data from the buffer to the blob with the appropriate content type
-    logger.info(f"Uploading parquet data to blob: {blob_path}")
     blob_obj.upload_from_file(buffer, content_type=f"application/{save_type}")
     
-    return f"{blob_path}"
+    return blob_path
 
-# Convert python list to a pandas DataFrame
-def list_to_df(json_lst: list, logger: logging.Logger | GCPLogger):
-    """_summary_
-
-    Args:
-        json_lst (list): _description_
-        logger (logging.Logger | GCPLogger): _description_
-
-    Returns:
-        _type_: _description_
-    Raises:
-        TypeError: If the input is not a list or if the list elements are not dicts.
-        ValueError: If the list is empty or if the dicts have inconsistent keys.
-    """
+def list_to_df(json_lst: list) -> DataFrame:
+    """Convert python list to a pandas DataFrame"""
     
-    logger.info("Converting list to pandas DataFrame")
-    return pd.DataFrame(json_lst)
+    return DataFrame(json_lst)

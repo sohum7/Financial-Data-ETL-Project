@@ -10,3 +10,4 @@ spark-3.5.0-bin-hadoop3-scala2.13
 scripts
 tmp_bashrc
 .DS_Store
+shared/misc/metadata.py

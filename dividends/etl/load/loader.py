@@ -1,134 +1,107 @@
 # Main load logic for various data categories to BigQuery
 
 # Built-in imports
+from logging import Logger
 from pandas import DataFrame as pd_DataFrame
-import logging
-
 
 # Shared imports
-from shared.clients.gcp.logging import GCPLogger
-#from shared.clients.gcp.naming_conv import GCSPathLib
-
-# Google API imports
-from google.api_core.exceptions import Conflict
-from google.cloud import bigquery as gc_bigquery
+from shared.clients.gcp.logging import CloudLogger
+from shared.clients.gcp.bq import TableConfig
+from shared.clients.gcp.services import create_target_table, create_staging_table, load_table
+from shared.configs.schema import get_columns
 
 
-def load(df_or_uri: pd_DataFrame | str, tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> None:
-    # Initialize BigQuery client
-    bq_client = gc_bigquery.Client()
+# Loading entry point
+def load(df: pd_DataFrame, data_type: str, tgt_bq_table_obj: TableConfig, stg_bq_table_obj: TableConfig, logger: Logger | CloudLogger) -> None:
+    """Loads transformed relational data into a staging/temp table while ensuring target and staging tables are created if not already
+
+    Args:
+        df (pd_DataFrame): Transformed Pandas DataFrame
+        data_type: (str): Category of data (dividends, tickers, etc)
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
+    
+    Returns: None
+    """
+    
+    # Retrieve column metadata (type, nullable, etc)
+    col_metadata: list[tuple[str, ...]] = get_columns(data_type)
+    
+    logger.info(f"RUNNING: Starting load process into BigQuery staging table {stg_bq_table_obj.ds_tbl}...")
     
     # Create dividends target table if it doesn't exist
-    create_dividends_tgt_tbl(bq_client, tgt_ds_tbl, "market_dt", "symbol", "market_dt")
+    create_dividends_tgt_tbl(tgt_bq_table_obj, col_metadata, logger)
     
     # Create or replace dividends staging table
-    create_stg_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl)
+    create_dividends_stg_tbl(tgt_bq_table_obj, stg_bq_table_obj, logger)
     
     # Load data to dividends staging table using the provided load function (either from df or uri)
-    load_by_data_type(bq_client, df_or_uri, stg_ds_tbl, logger)
+    load_main(df, stg_bq_table_obj, logger)
+    
+    logger.info("SUCCESS: Load process to staging table completed.")
 
+# Load from pandas DataFrame to staging table
+def load_main(df: pd_DataFrame, stg_bq_table_obj: TableConfig, logger: Logger | CloudLogger) -> None:
+    """Loads transformed relational data into a staging/temp table
 
-def load_by_data_type(bq_client: gc_bigquery.Client, df_or_uri: pd_DataFrame | str, stg_ds_tbl: str, logger: GCPLogger) -> None:
-    if isinstance(df_or_uri, pd_DataFrame):
-        logger.info("Passing a pandas DataFrame to load function")
-        load_df_to_stg_tbl(df_or_uri, bq_client, stg_ds_tbl)
-    elif isinstance(df_or_uri, str):
-        logger.info(f"Passing a uri to load function: {df_or_uri}")
-        load_uri_to_stg_tbl(df_or_uri, bq_client, stg_ds_tbl)
+    Args:
+        df (pd_DataFrame): Transformed Pandas DataFrame
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
 
-def create_dividends_tgt_tbl(bq_client: gc_bigquery.Client, ds_tbl: str, partition_col: str | None=None, *cluster_cols: str) -> gc_bigquery.QueryJob:
-    optional_clause = ""
+    Returns: None
+    """
     
-    # Add partitioning to the create table query if the respective parameter is provided
-    if partition_col:
-        optional_clause = f" PARTITION BY {partition_col} "
+    logger.info("Starting main load operation...")
     
-    # Add clustering clauses to the create table query if the respective parameter is provided
-    if cluster_cols:
-        cluster_cols_str = ", ".join( col.strip() for col in cluster_cols )
-        optional_clause += f" CLUSTER BY {cluster_cols_str} "
+    load_table(df,
+                stg_bq_table_obj.dataset,
+                stg_bq_table_obj.table,
+                "WRITE_TRUNCATE")
     
-    # Create table if not exists query
-    create_tbl_query = \
-        f"""
-            CREATE TABLE IF NOT EXISTS {ds_tbl} (
-                symbol STRING,
-                market_dt DATE,
-                dividend_ratio FLOAT64,
-                distr_freq STRING,
-                payment_dt DATE,
-                record_dt DATE,
-                declar_dt DATE
-            )  
-            {optional_clause}
-        """
-    
-    # Run create table query and wait for it to finish
-    create_tbl_query_job = bq_client.query(create_tbl_query)
-    create_tbl_query_job.result()
-    
-    # If there was an error creating the table, raise an exception with the error details
-    if create_tbl_query_job.error_result:
-        err_msg = f"Error creating target table: {create_tbl_query_job.error_result}"
-        raise Conflict(err_msg)
-    
-    return create_tbl_query_job
+    logger.info("Main load operation completed.")
 
-def create_stg_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_tbl: str) -> gc_bigquery.QueryJob:
-    # Ensure that the provided target and staging dataset.table parameters are in the correct format before running the create table query
-    if "." not in tgt_ds_tbl or "." not in stg_ds_tbl: 
-        logging.error(f"create_stg_tbl was not provided tgt_ds_tbl and stg_ds_tbl parameter's with dataset and table names as such 'ds_nm.tbl_nm' ")
+# Create the target table for dividends category
+def create_dividends_tgt_tbl(tgt_bq_table_obj: TableConfig, col_metadata: list[tuple[str, ...]], logger: Logger | CloudLogger) -> None:
+    """Creates the dividend category's target/main table
     
-    # Create or replace staging table query w/ same schema as target table
-    create_tbl_query = \
-        f"""
-            CREATE OR REPLACE TABLE {stg_ds_tbl} 
-            LIKE {tgt_ds_tbl}
-        """
+    Args:
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        col_metadata (list[tuple[str, ...]]): Column data with associated constraints
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
     
-    # Run create table query and wait for it to finish
-    create_tbl_query_job = bq_client.query(create_tbl_query)
-    create_tbl_query_job.result()
+    Returns: None
+    """
     
-    # If there was an error creating the table, raise an exception with the error details
-    if create_tbl_query_job.error_result:
-        err_msg = f"Error creating {stg_ds_tbl} staging table: {create_tbl_query_job.error_result}"
-        raise Conflict(err_msg)
+    logger.info(f"Starting create target table operation...")
     
-    return create_tbl_query_job
+    create_target_table(tgt_bq_table_obj.dataset, 
+                        tgt_bq_table_obj.table, 
+                        col_metadata, 
+                        tgt_bq_table_obj.partition_col.column if tgt_bq_table_obj.partition_col is not None else None, 
+                        tgt_bq_table_obj.partition_col.granularity if tgt_bq_table_obj.partition_col is not None else None,
+                        tgt_bq_table_obj.cluster_cols)
+    
+    logger.info("Create target table operation completed.")
 
-def load_df_to_stg_tbl(df: pd_DataFrame, bq_client: gc_bigquery.Client, stg_ds_tbl: str):
-    # Load job configuration with write disposition set to overwrite the staging table data with each load
-    job_config = gc_bigquery.LoadJobConfig(write_disposition="WRITE_TRUNCATE")
+# Create the staging table for dividends category
+def create_dividends_stg_tbl(tgt_bq_table_obj: TableConfig, stg_bq_table_obj: TableConfig, logger: Logger | CloudLogger) -> None:
+    """Creates the dividend category's staging/temp table
     
-    # Load data from the provided pandas DataFrame to the staging table and wait for the load job to finish
-    load_tbl_query_job = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config=job_config)
-    load_tbl_query_job.result()
+    Args:
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
     
-    # If there was an error loading the data to the staging table, raise an exception with the error details
-    if load_tbl_query_job.errors:
-        err_msg = f"Error loading data to {stg_ds_tbl} staging table{'.' if not load_tbl_query_job else f': {load_tbl_query_job.errors}'}"
-        raise Conflict(err_msg)
-
-def load_uri_to_stg_tbl(uri: str, bq_client: gc_bigquery.Client, stg_ds_tbl: str):
-    # Extract the file type from the provided URI to specify the correct format in the load data query
-    file_type = uri.split(".")[-1]
+    Returns: None
+    """
     
-    # Load data query from GCS URI
-    load_tbl_query = \
-        f"""
-            LOAD DATA INTO {stg_ds_tbl}
-            FROM FILES (
-            format = '{file_type.upper()}',
-            uris = ['{uri}']
-            )
-        """
+    logger.info(f"Starting create staging table operation...")
     
-    # Run load data query and wait for it to finish
-    load_tbl_query_job = bq_client.query(load_tbl_query)
-    load_tbl_query_job.result()
+    create_staging_table(tgt_bq_table_obj.dataset,
+                        tgt_bq_table_obj.table,
+                        stg_bq_table_obj.dataset,
+                        stg_bq_table_obj.table)
     
-    # If there was an error loading the data to the staging table, raise an exception with the error details
-    if load_tbl_query_job.errors:
-        err_msg = f"Error loading data to {stg_ds_tbl} staging table{'.' if not load_tbl_query_job else f': {load_tbl_query_job.errors}'}"
-        raise Conflict(err_msg)
+    logger.info("Create staging table operation completed.")

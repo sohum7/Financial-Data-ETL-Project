@@ -1,51 +1,64 @@
-# 
+# Load logic for dividends data category to BigQuery
+
+# Builtin imports
+from logging import Logger
 
 # Shared imports
-from shared.clients.gcp.logging import GCPLogger
-from shared.misc.utilities import http_return
-
-# Google API imports
-from google.api_core.exceptions import Conflict
-from google.cloud import bigquery as gc_bigquery
+from shared.clients.gcp.bq import TableConfig
+from shared.clients.gcp.logging import CloudLogger
+from shared.clients.gcp.services import merge_table
+from shared.configs.schema import get_columns, get_primary_columns
 
 
+# Merging entry point
+def merge(data_type: str, tgt_bq_table_obj: TableConfig, stg_bq_table_obj: TableConfig, logger: Logger | CloudLogger) -> None:
+    """Merge staging/temp table into target table while ensuring duplicate records are not inserted
 
-def merge(tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> None:
-    # Initialize BigQuery client
-    bq_client = gc_bigquery.Client()
+    Args:
+        data_type (str): The type of data 
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
+
+    Returns: None
+    """
+    
+    tgt_ds_tbl = tgt_bq_table_obj.ds_tbl
+    stg_ds_tbl = stg_bq_table_obj.ds_tbl
+    
+    # Get all column names and join columns later used for the merge query
+    all_cols = [ row[0] for row in get_columns(data_type) ]
+    join_cols = get_primary_columns(data_type)
+    
+    logger.info(f"RUNNING: Merging process from staging table {stg_ds_tbl} to target table {tgt_ds_tbl}...")
     
     # Merge data from staging to target table
-    merge_stg_to_tgt_tbl(bq_client, tgt_ds_tbl, stg_ds_tbl, logger)
+    merge_main(tgt_bq_table_obj, stg_bq_table_obj, all_cols, join_cols, logger)
+    
+    logger.info(f"SUCCESS: Merging data from staging table {stg_ds_tbl} to target table {tgt_ds_tbl} completed.")
 
-def merge_stg_to_tgt_tbl(bq_client: gc_bigquery.Client, tgt_ds_tbl: str, stg_ds_tbl: str, logger: GCPLogger) -> gc_bigquery.QueryJob:
-    # Merge staging table to target tablequery
-    merge_tbls_query = \
-        f"""
-            MERGE INTO {tgt_ds_tbl} AS target
-            USING {stg_ds_tbl} AS staging
-            ON target.symbol = staging.symbol
-            AND target.market_dt = staging.market_dt
-            WHEN MATCHED THEN
-            UPDATE SET
-                target.distr_freq = staging.distr_freq,
-                target.payment_dt = staging.payment_dt,
-                target.record_dt  = staging.record_dt,
-                target.declar_dt  = staging.declar_dt,
-                target.dividend_ratio   = staging.dividend_ratio
-            WHEN NOT MATCHED THEN
-            INSERT (symbol, market_dt, payment_dt, record_dt, declar_dt, dividend_ratio)
-            VALUES (staging.symbol, staging.market_dt, staging.payment_dt, staging.record_dt, staging.declar_dt, staging.dividend_ratio);
-        """
+# Merge from staging table to target table
+def merge_main(tgt_bq_table_obj: TableConfig, stg_bq_table_obj: TableConfig, all_cols: list[str], join_cols: list[str], logger: Logger | CloudLogger) -> None:
+    """Merge staging/temp table into target table while ensuring duplicate records are not inserted
+
+    Args:
+        tgt_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the target table
+        stg_bq_table_obj (TableConfig): Contains necessary Google BigQuery table metadata for the staging table
+        all_cols (list[str]): All columns for the table
+        join_cols (list[str]): All join columns for the table to ensure duplicate records are not inserted
+        logger (Logger | CloudLogger): Utilized for logging steps taken as well as errors
+
+    Returns: None
+    """
     
-    # Execute the merge query and wait for it to complete
-    merge_tbls_query_job = bq_client.query(merge_tbls_query)
-    merge_tbls_query_job.result()
+    logger.info("Running the main merge operation...")
     
-    # Check for errors in the merge query job and raise an exception if any are found
-    if merge_tbls_query_job.errors:
-        err_msg = f"Error merging staging to target table: {merge_tbls_query_job.error_result}"
-        logger.error(err_msg)
-        raise Conflict(err_msg)
+    merge_table(tgt_bq_table_obj.dataset,
+                tgt_bq_table_obj.table,
+                stg_bq_table_obj.dataset,
+                stg_bq_table_obj.table,
+                all_cols,
+                join_cols)
     
-    return merge_tbls_query_job
+    logger.info("Main merge operation completed.")
 
