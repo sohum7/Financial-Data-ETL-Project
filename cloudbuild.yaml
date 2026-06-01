@@ -95,8 +95,8 @@ options:
   #machineType: E2_HIGHCPU_8
 
 # Within the trigger settings already
-#substitutions:
-#  _REPO_NAME: financial-data-etl-project
-#  _IMAGE_NAME: ms-etl
-#  _REGION: us-central1
-#  _ENV: dev
+substitutions:
+  _REPO_NAME: market-stack-etl-portfolio
+  _IMAGE_NAME: market-stack-etl-img
+  _REGION: us-central1
+  _ENV: dev
