@@ -24,8 +24,8 @@ def main():
     kwargs = {} if not manual_override_dates else {
         "override_dates": {
             "batch_dt": "2026-01-31",
-            "start_dt": "2025-01-01",
-            "end_dt"  : "2025-12-31"
+            "start_dt": "2024-01-01",
+            "end_dt"  : "2024-12-31"
         }
     }
     
