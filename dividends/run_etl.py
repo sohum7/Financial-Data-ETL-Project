@@ -21,7 +21,7 @@ def main():
     full_refresh = False
     manual_override_dates = True
     
-    kwargs = {} if manual_override_dates else {
+    kwargs = {} if not manual_override_dates else {
         "override_dates": {
             "batch_dt": "2026-01-31",
             "start_dt": "2025-01-01",
