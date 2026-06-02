@@ -74,8 +74,7 @@ python3.11 --version
 2. Clone the repo:
 
 ```bash
-git clone <your-repo-url>
-cd <repo-name>
+gh repo clone sohum7/market-stack-etl-portfolio
 ```
 
 3. Create virtual environment:
@@ -127,23 +126,10 @@ python -m dividends.run_etl
 ## 📈 Data Design
 
 * Partitioned tables (by market date)
-* Clustering (by symbol/company)
+* Clustering (by symbol and market date)
 * Incremental loads
 * Merge-based upserts
 * Optimized for analytics and query performance
-
-## 🚢 Deployment
-
-Build Docker image:
-
-```bash
-docker build -t etl-pipeline .
-```
-
-Deploy to Cloud Run:
-
-### TODO: Create with Terraform ##
-
 
 ## ⚠️ Notes
 
