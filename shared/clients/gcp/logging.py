@@ -9,8 +9,6 @@ from google.cloud import logging as gc_logging
 
 # Custom GCP Logger
 class CloudLogger(logging.Logger):
-    __slots__ = ["client"]
-    
     def __init__(self) -> None:
         self.client = None
     
