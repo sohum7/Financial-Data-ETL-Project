@@ -10,7 +10,7 @@ from google.cloud import logging as gc_logging
 
 # Custom GCP Logger
 class CloudLogger:
-    # Explicit slots for memory efficiency, completely safe now
+    # Explicit slots for memory efficiency
     __slots__ = ["client", "_logger"]
     
     def __init__(self, logger_name: str = "gcp_cloud_logger") -> None:
@@ -32,12 +32,14 @@ class CloudLogger:
     def logger(self) -> None:
         del self._logger
     
+    # Enable logging to GCP Cloud Logging by initializing the client and setting up logging handlers
     def enable_logging(self) -> None:
         # Avoid re-initializing if already active
         if not self.client:
             self.client = gc_logging.Client()
             self.client.setup_logging()
     
+    # Disable logging by shutting down the logging system and cleaning up the client reference
     def disable_logging(self) -> None:
         logging.shutdown()
         if self.client:
