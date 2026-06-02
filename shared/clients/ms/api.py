@@ -28,7 +28,7 @@ class APIConfig:
         fields = [
             ("data_type", self.data_type, str),
             ("base_url", self.base_url, str),
-            ("symbols",  self.symbols,  list),
+            ("symbols",  self.symbols,  list), # list of strings, but we will check the individual elements later
             ("api_key",  self.api_key,  str),
             ("start_dt", self.start_dt, str),
             ("end_dt",   self.end_dt,   str),
@@ -36,7 +36,7 @@ class APIConfig:
         ]
         
         for name, value, type in fields:
-            if not isinstance(value, str):
+            if not isinstance(value, type):
                 raise TypeError(f"{name} must be {type}")
         
         if not all(isinstance(symbol, str) for symbol in self.symbols):
