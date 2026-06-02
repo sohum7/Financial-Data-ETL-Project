@@ -81,7 +81,7 @@ steps:
       "run",
       "jobs",
       "execute",
-      "ms-cloudrun-etl-job",
+      "market-stack-etl-cloudrun-job",
       "--region=$_REGION"
     ]
   waitFor: ['deploy-job']

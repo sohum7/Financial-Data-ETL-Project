@@ -1,15 +1,15 @@
 apiVersion: run.googleapis.com/v1
 kind: Job
 metadata:
-  name: ms-cloudrun-etl-job
+  name: market-stack-etl-cloudrun-job
 spec:
   template:
     spec:
       template:
         spec:
-          serviceAccountName: ms-cloudrun-etl-sa
+          serviceAccountName: market-stack-etl-cloudrun-sa
           containers:
-            - name: ms-etl-container
+            - name: market-stack-etl-container
               image: IMAGE_PLACEHOLDER
               command: ["python"]
               args: ["dividends/run_etl.py"]
