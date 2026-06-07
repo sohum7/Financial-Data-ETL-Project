@@ -44,7 +44,7 @@ class FileConfig:
         
         for name, value, typ in fields:
             if not isinstance(value, str):
-                raise TypeError(f"{name} must be {typ}")
+                raise TypeError(f"ERROR: Invalid type for {name} - REASON: {name} must be {typ}")
     
     # Clean instance variables
     def clean_vars(self):

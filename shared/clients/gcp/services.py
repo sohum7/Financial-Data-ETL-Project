@@ -60,8 +60,8 @@ def create_target_table(tgt_ds: str, tgt_table: str, col_metadata: list[tuple[st
     
     # Log errors and raise exception
     if create_tbl_query_job.error_result:
-        err_msg: str = create_tbl_query_job.error_result.get("message", "Unknown error")
-        err_reason: str = create_tbl_query_job.error_result.get("reason", "Unknown reason for error")
+        err_msg = create_tbl_query_job.error_result.get("message", "Unknown error")
+        err_reason = create_tbl_query_job.error_result.get("reason", "Unknown reason for error")
         
         raise ConflictError(f"ERROR: {err_msg} - REASON: {err_reason}")
 
@@ -76,13 +76,13 @@ def create_staging_table(tgt_ds: str, tgt_table: str, stg_ds: str, stg_table: st
     
     Returns: None
     """
-    tgt_ds_tbl: str = f"{tgt_ds}.{tgt_table}"
-    stg_ds_tbl: str = f"{stg_ds}.{stg_table}"
+    tgt_ds_tbl = f"{tgt_ds}.{tgt_table}"
+    stg_ds_tbl = f"{stg_ds}.{stg_table}"
     
-    bq_client: bq.Client = bq.Client()
+    bq_client = bq.Client()
     
     # Create or replace staging table query w/ same schema as target table
-    create_tbl_query: str = \
+    create_tbl_query = \
         f"""
             CREATE OR REPLACE TABLE {stg_ds_tbl} 
             AS 
@@ -90,13 +90,13 @@ def create_staging_table(tgt_ds: str, tgt_table: str, stg_ds: str, stg_table: st
         """
     
     # Run create table query and wait for it to finish
-    create_tbl_query_job: bq.QueryJob = bq_client.query(create_tbl_query)
+    create_tbl_query_job = bq_client.query(create_tbl_query)
     create_tbl_query_job.result()
     
     # Log errors and raise exception
     if create_tbl_query_job.error_result:
-        err_msg: str = create_tbl_query_job.error_result.get("message", "Unknown error")
-        err_reason: str = create_tbl_query_job.error_result.get("reason", "Unknown reason for error")
+        err_msg = create_tbl_query_job.error_result.get("message", "Unknown error")
+        err_reason = create_tbl_query_job.error_result.get("reason", "Unknown reason for error")
         
         raise ConflictError(f"ERROR: {err_msg} - REASON: {err_reason}")
 
@@ -113,12 +113,12 @@ def load_table(df: DataFrame, ds: str, table: str, write_disp: str) -> None:
     """
     
     job_config: bq.LoadJobConfig = bq.LoadJobConfig(write_disposition=write_disp)
-    stg_ds_tbl: str = f"{ds}.{table}"
+    stg_ds_tbl = f"{ds}.{table}"
     
-    bq_client: bq.Client = bq.Client()
+    bq_client = bq.Client()
     
     # Load data from the provided pandas DataFrame to the staging table and wait for the load job to finish
-    load_tbl_query_job: bq.LoadJob = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config=job_config)
+    load_tbl_query_job = bq_client.load_table_from_dataframe(df, stg_ds_tbl, job_config=job_config)
     load_tbl_query_job.result()
     
     # Log errors and raise exception
@@ -140,10 +140,10 @@ def merge_table(tgt_ds: str, tgt_table: str, stg_ds: str, stg_table: str, all_co
     Returns: None
     """
     
-    tgt_ds_tbl: str = f"{tgt_ds}.{tgt_table}"
-    stg_ds_tbl: str = f"{stg_ds}.{stg_table}"
+    tgt_ds_tbl = f"{tgt_ds}.{tgt_table}"
+    stg_ds_tbl = f"{stg_ds}.{stg_table}"
     
-    bq_client: bq.Client = bq.Client()
+    bq_client = bq.Client()
     
     # Required clause values for merging properly and ensuring no duplicates
     join_clause = " AND ".join(f"target.{col} = staging.{col}" for col in join_cols)
@@ -164,7 +164,7 @@ def merge_table(tgt_ds: str, tgt_table: str, stg_ds: str, stg_table: str, all_co
         """
     
     # Execute the merge query and wait for it to complete
-    merge_tbls_query_job: bq.QueryJob = bq_client.query(merge_tbls_query)
+    merge_tbls_query_job = bq_client.query(merge_tbls_query)
     merge_tbls_query_job.result()
     
     # Log errors and raise exception
@@ -183,9 +183,8 @@ def get_blob_obj(bucket_nm: str, blob_nm: str) -> gcs.Blob:
     
     storage_client_obj = gcs.Client()
     bucket_obj = storage_client_obj.bucket(bucket_nm)
-    blob_obj = bucket_obj.blob(blob_nm)
     
-    return blob_obj
+    return bucket_obj.blob(blob_nm)
 
 def check_blob_exists(bucket_nm: str, blob_nm: str) -> bool:
     """Check if a blob exists"""

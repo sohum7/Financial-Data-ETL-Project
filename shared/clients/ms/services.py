@@ -8,6 +8,23 @@ from shared.clients.ms.api import APIConfig
 
 # Main Market Stack API extractor logic
 def ms_api_request(data_type: str, base_url: str, symbols_lst_str: str, api_key: str, start_dt: str, end_dt: str, **kwargs) -> dict:
+    """Submit a request to the Marketstack API and return the parsed JSON response. This function builds the request parameters, sends the HTTP request, and validates the response status.
+
+    The function focuses on configuring query parameters such as symbols, date range, and sorting, while delegating URL construction to the API configuration. It then performs the HTTP GET call and returns the decoded JSON payload as a Python dictionary.
+
+    Args:
+        data_type: The type of Marketstack data to request (for example, 'dividends' or 'tickers').
+        base_url: The base URL of the Marketstack API.
+        symbols_lst_str: A comma-separated string of ticker symbols to request.
+        api_key: The API access key for authenticating with Marketstack.
+        start_dt: The start date for the data query in ISO or API-accepted string format.
+        end_dt: The end date for the data query in ISO or API-accepted string format.
+        **kwargs: Optional query parameters such as 'limit' and 'sort' to refine the request.
+
+    Returns:
+        A dictionary representing the JSON-decoded response body from the Marketstack API.
+    """
+    
     default_limit = 10000
     default_sort = "ASC"
     

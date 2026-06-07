@@ -25,7 +25,7 @@ class CloudLogger:
     @logger.setter
     def logger(self, value: logging.Logger) -> None:
         if not isinstance(value, logging.Logger):
-            raise ValueError("logger must be an instance of logging.Logger")
+            raise ValueError("ERROR: Invalid type for logger - REASON: logger must be an instance of logging.Logger")
         self._logger = value
     
     @logger.deleter
@@ -49,13 +49,13 @@ class CloudLogger:
             self.client = None
             
     # Delegate logging methods explicitly to the internal logger instance
-    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def info(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         self._logger.info(msg, *args, **kwargs)
         
-    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def error(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         self._logger.error(msg, *args, **kwargs)
 
-    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+    def warning(self, msg: Any, *args: Any, **kwargs: Any) -> None:
         self._logger.warning(msg, *args, **kwargs)
 
     # Context manager implementation

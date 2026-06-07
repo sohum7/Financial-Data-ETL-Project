@@ -67,6 +67,7 @@ def transform_main(df: DataFrame, logger: Logger | CloudLogger) -> tuple[DataFra
     
     if not len(df):
         err_msg = "DataFrame was not provided data to transform"
+        
         logger.warning(f"WARNING: {err_msg}")
         raise ValueError(err_msg)
     
@@ -127,6 +128,7 @@ def read_transform_parquet(gcs_path_obj: FileConfig, logger: Logger | CloudLogge
         tfd_df = read_parquet(gcs_path_obj.bucket_nm, gcs_path_obj.blob_nm,)
     except Exception as e:
         err_msg = "Failed to read transformed file from GCS"
+        
         logger.error(f"ERROR: {err_msg} - REASON: {e}")
         raise ValueError(err_msg)
     
@@ -154,6 +156,7 @@ def write_transform_parquet(df: DataFrame, gcs_path_obj: FileConfig, logger: Log
         blob_path = write_parquet(df, gcs_path_obj.bucket_nm, gcs_path_obj.blob_nm)
     except Exception as e:
         err_msg = "Failed to write transformed file to GCS"
+        
         logger.error(f"ERROR: {err_msg} - REASON: {e}")
         raise ValueError(err_msg)
     

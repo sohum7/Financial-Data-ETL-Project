@@ -13,7 +13,7 @@ def get_past_week_range(reference_date: date | None=None) -> tuple[str, str, str
     if reference_date is None:
         reference_date = date.today()
     if not isinstance(reference_date, date):
-        raise ValueError("reference_date is not of type date or None")
+        raise ValueError("ERROR: Invalid reference_date type - REASON: reference_date is not of type date or None")
     # weekday(): Monday=0, Sunday=6
     # Convert to Sunday=0, Saturday=6
     weekday_sun0 = (reference_date.weekday() + 1) % 7

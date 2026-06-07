@@ -57,10 +57,10 @@ def load_config() -> tuple[ConfigParser, dict[str, str]]:
     
     # Ensure certain fields are not missing
     if not env_vars["PROJECT_ID"]:
-        raise ValueError("project_id not obtained from ADC'\n and env variable PROJECT_ID missing")
+        raise ValueError("ERROR: project_id not obtained from ADC'\n and env variable PROJECT_ID missing")
     
     if not env_vars["ENV"]:  
-        raise ValueError("missing required environment variable: ENVIRONMENT")
+        raise ValueError("ERROR: missing required environment variable: ENVIRONMENT")
     
     return config, env_vars
 

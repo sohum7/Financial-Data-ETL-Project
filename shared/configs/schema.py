@@ -17,7 +17,7 @@ def get_columns(data_type: str) -> list[tuple[str, ...]]:
     if data_type == "dividends": 
         return DIVIDENDS_CONFIG["columns"]
     else:
-        raise ValueError(f"Unsupported data type: {data_type}")
+        raise ValueError(f"ERROR: Unsupported Data Type: {data_type}")
     
 def get_primary_columns(data_type: str) -> list[str]:
     """Retrieve primary columns for the given data type"""
@@ -25,4 +25,4 @@ def get_primary_columns(data_type: str) -> list[str]:
     if data_type == "dividends": 
         return DIVIDENDS_CONFIG["primary_cols"]
     else:
-        raise ValueError(f"Unsupported data type: {data_type}")
+        raise ValueError(f"ERROR: Unsupported Data Type: {data_type}")

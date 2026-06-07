@@ -74,7 +74,7 @@ def create_dividends_tgt_tbl(tgt_bq_table_obj: TableConfig, col_metadata: list[t
     Returns: None
     """
     
-    logger.info(f"Starting create target table operation...")
+    logger.info("Starting create target table operation...")
     
     create_target_table(tgt_bq_table_obj.dataset, 
                         tgt_bq_table_obj.table, 
@@ -97,7 +97,7 @@ def create_dividends_stg_tbl(tgt_bq_table_obj: TableConfig, stg_bq_table_obj: Ta
     Returns: None
     """
     
-    logger.info(f"Starting create staging table operation...")
+    logger.info("Starting create staging table operation...")
     
     create_staging_table(tgt_bq_table_obj.dataset,
                         tgt_bq_table_obj.table,

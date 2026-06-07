@@ -37,10 +37,10 @@ class APIConfig:
         
         for name, value, type in fields:
             if not isinstance(value, type):
-                raise TypeError(f"{name} must be {type}")
+                raise TypeError(f"ERROR: Invalid type for {name} - REASON: {name} must be {type}")
         
         if not all(isinstance(symbol, str) for symbol in self.symbols):
-            raise TypeError("all symbols must be str")
+            raise TypeError("ERROR: Invalid type for symbols list - REASON: all symbols must be str")
     
     # Data normalization and validation
     def clean_vars(self):
@@ -55,7 +55,7 @@ class APIConfig:
         ]
         # TODO: ensure start date is before end date and same for batch with respect to end date
         if not self.start_dt < self.end_dt < self.batch_dt:
-            pass
+            raise ValueError("ERROR: Dates are not in the correct order - REASON: start date must be < end date must be < batch date")
         
         # Set the fields to their new values
         # Note: for frozen dataclasses this is the only way to modify variables
@@ -78,7 +78,7 @@ class APIConfig:
                 return datetime.strptime(date_str, fmt).strftime("%Y-%m-%d")
             except ValueError:
                 continue
-        raise ValueError(f"Invalid date format: {date_str}")
+        raise ValueError(f"ERROR: Invalid date format: {date_str} - REASON: date must be in one of the following formats: {formats}")
     
     # Create url w/o params
     @staticmethod
