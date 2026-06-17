@@ -15,113 +15,96 @@ Designed for **weekly batch processing**, **idempotency**, and **scalability**.
 ## 🏗️ Architecture
 
 ```
-       +---------+       +------------------+       +----------------+
-       |  API    |  -->  | shared.clients   |  -->  | dividends/etl  |
-       +---------+       +------------------+       +-------+--------+
-                                                        |       |
-                                                        v       v
-                                                      extract  transform
-                                                        |       |
-                                                        +-------+
-                                                            |
-                                                            v
-                                                          load
-                                                            |
-                                                            v
-                                                       BigQuery
+Market Stack API
+        │
+        ▼
+┌─────────────────────────┐
+│ Extract                 │
+│ • Retrieve JSON data    │
+│ • Persist raw extracts  │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ Google Cloud Storage    │
+│ (Raw Cache)             │
+│ • JSON extract files    │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ Transform               │
+│ • Read cached extracts  │
+│ • Convert to Pandas DF  │
+│ • Apply cleansing and   │
+│   business rules        │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ Google Cloud Storage    │
+│ (Transformed Cache)     │
+│ • Persist intermediate  │
+│   datasets              │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ Load                    │
+│ • Load transformed data │
+│   into BigQuery staging │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ BigQuery Staging Tables │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ Merge                   │
+│ • Upsert records into   │
+│   target tables         │
+└──────────┬──────────────┘
+           │
+           ▼
+┌─────────────────────────┐
+│ BigQuery Target Tables  │
+└─────────────────────────┘
 ```
 
 ## 🛠️ Tech Stack
 
 * Python 3.11
 * Google Cloud Platform (GCP)
-
-  * BigQuery
-  * Cloud Storage
-  * Cloud Run
-  * Cloud Scheduler
+  * BigQuery (Data Warehouse)
+  * Cloud Storage (Intermediate Data Caching)
+  * Cloud Run (Container Runtime)
+  * Cloud Scheduler (Job Triggering)
+  * Cloud Build (CI/CD)
 * Docker
-
-## 📂 Project Structure
-
-```
-shared/
-├── clients/        # API clients (GCP, MarketStack)
-├── configs/        # Config files and loader
-└── misc/           # Metadata & utilities
-dividends/
-├── etl/
-│   ├── extract/    # Extractors
-│   ├── transform/  # Transformers
-│   └── load/       # Loaders & mergers
-└── run_etl.py      # Entry point
-scripts/            # Helper & deployment scripts
-cloudbuild.yaml     # Cloud Build config
-cloudrun.yaml       # Cloud Run deployment config
-Dockerfile          # Application containerization
-requirements.txt    # Required packages
-README.md
-```
-
-## ⚙️ Setup (Python 3.11)
-
-1. Ensure Python 3.11 is installed:
-
-```bash
-python3.11 --version
-```
-
-2. Clone the repo:
-
-```bash
-gh repo clone sohum7/market-stack-etl-portfolio
-```
-
-3. Create virtual environment:
-
-```bash
-python3.11 -m venv venv
-source venv/bin/activate      # Mac/Linux
-venv\Scripts\activate         # Windows
-```
-
-4. Upgrade pip:
-
-```bash
-pip install --upgrade pip
-```
-
-5. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
 
 ## 🔐 Environment Configuration
 
 Minimal `.env`:
 
-```
+```text
 ENVIRONMENT=dev | prod
 ```
 
-* `dev` → local development + Cloud Run
-* `prod` → Cloud Run / production environment - ## TODO: Create with Terraform ##
-* Configuration handled via `shared/configs/config_loader.py`
+* `dev` → Local development and Cloud Run deployment
+* `prod` → Reserved for the production environment
 
-## ▶️ Running the Pipeline
+Configuration is managed via `shared/configs/config_loader.py`.
 
-Run the full ETL:
-
-```bash
-python -m dividends.run_etl
-```
+> **Note:** Production infrastructure and deployment via Terraform are planned for a future release.
 
 ## 🗓️ Scheduling
 
-* Scheduled as a **weekly batch job**
-* Triggered via **Cloud Scheduler → Cloud Run** ## TODO: Cloud Scheduler ##
-* Processes data in **date-bounded batches** (Mon–Fri)
+* Intended to be triggered via **Cloud Scheduler → Cloud Run**
+* Processes data in date-bounded batches (Mon–Fri)
+
+> **Note:** Cloud Scheduler integration is planned for a future release.
 
 ## 📈 Data Design
 
@@ -131,22 +114,49 @@ python -m dividends.run_etl
 * Merge-based upserts
 * Optimized for analytics and query performance
 
+## 🔐 IAM Service Accounts
+
+### market-stack-etl-cloudbuild-sa
+
+* Artifact Registry Writer
+* Cloud Build Editor
+* Cloud Build Service Account
+* Cloud Run Developer
+* Service Account User
+
+### market-stack-etl-cloudrun-sa
+
+* BigQuery Data Editor
+* BigQuery User
+* Logs Writer
+* Secret Manager Secret Accessor
+* Service Account User
+* Storage Object User
+
 ## ⚠️ Notes
 
 * Python version locked to 3.11
 * Ensure proper IAM roles for BigQuery and Cloud Storage
-* Pipeline supports idempotent re-runs ## TODO: retries at 0 for now ##
+* Pipeline supports idempotent re-runs
+* Retry policies are currently disabled and will be enhanced in future iterations
 
 ## 📌 Future Improvements
 
-* Cloud Scheduler addition
-* Terraform (IaC) addition for production environment deployment
+* Cloud Scheduler integration
+* Terraform-based infrastructure provisioning
+* Production environment deployment
 * Data quality validation checks
-* Monitoring & alerting
-* CI/CD integration
-* Backfill automation
+* Monitoring and alerting
+* Enhanced CI/CD workflows
+* Automated backfill support
+* Retry and recovery mechanisms
 
 ## 👤 Author
 
-Sohum Patel
+**Sohum Patel**
 
+Associate Data Engineer
+
+* Google Cloud Associate Cloud Engineer
+* Experience building ETL pipelines on GCP
+* Background in healthcare data engineering
